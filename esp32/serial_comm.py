@@ -77,7 +77,7 @@ class SerialComm:
         if self._ser and self._ser.is_open:
             try:
                 self._ser.close()
-            except serial.SerialException:
+            except Exception:
                 pass
         self._ser = None
         self._on_status("Disconnected")
@@ -88,7 +88,7 @@ class SerialComm:
             return
         try:
             self._ser.write((command.strip() + "\n").encode())
-        except serial.SerialException as exc:
+        except Exception as exc:
             self._on_status(f"Send error: {exc}")
 
     def start_race(self):
@@ -109,7 +109,7 @@ class SerialComm:
         while not self._stop_event.is_set():
             try:
                 line = self._ser.readline().decode(errors="replace").strip()
-            except serial.SerialException:
+            except Exception:
                 self._on_status("Serial read error – disconnected")
                 break
             if not line:
