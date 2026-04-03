@@ -5,6 +5,7 @@ from __future__ import annotations
 import tkinter as tk
 from tkinter import ttk
 import database.db_manager as db
+from gui import theme
 
 
 class ResultsView(ttk.Frame):
@@ -17,7 +18,7 @@ class ResultsView(ttk.Frame):
         ("lane", "Lintasan", 70),
         ("athlete", "Nama Atlet", 180),
         ("school", "Sekolah", 180),
-        ("time", "Waktu", 90),
+        ("time", "Waktu", 100),
         ("rank", "Peringkat", 80),
         ("notes", "Keterangan", 120),
     )
@@ -29,24 +30,27 @@ class ResultsView(ttk.Frame):
 
     def _build(self):
         top = ttk.Frame(self)
-        top.pack(fill="x", padx=6, pady=4)
-        ttk.Label(top, text="Filter Acara:").pack(side="left")
+        top.pack(fill="x", padx=8, pady=(6, 4))
+        ttk.Label(top, text="Filter Acara:",
+                  font=theme.FONT_SMALL_BOLD).pack(side="left")
         self._acara_var = tk.StringVar(value="Semua")
         self._acara_combo = ttk.Combobox(top, textvariable=self._acara_var,
                                          width=20, state="readonly")
-        self._acara_combo.pack(side="left", padx=4)
+        self._acara_combo.pack(side="left", padx=6)
         self._acara_combo.bind("<<ComboboxSelected>>", lambda _: self._refresh())
-        ttk.Button(top, text="↺ Muat Ulang", command=self._refresh).pack(side="left", padx=4)
+        ttk.Button(top, text="↺ Muat Ulang", command=self._refresh).pack(
+            side="left", padx=4)
 
         # Treeview
         frm = ttk.Frame(self)
-        frm.pack(fill="both", expand=True, padx=6, pady=4)
+        frm.pack(fill="both", expand=True, padx=8, pady=4)
 
         self._tree = ttk.Treeview(frm, show="headings",
                                   columns=[c[0] for c in self.COLUMNS])
         for cid, text, width in self.COLUMNS:
             self._tree.heading(cid, text=text)
-            self._tree.column(cid, width=width, anchor="center" if cid in ("acara", "heat", "lane", "rank") else "w")
+            self._tree.column(cid, width=width,
+                              anchor="center" if cid in ("acara", "heat", "lane", "rank", "time") else "w")
 
         vsb = ttk.Scrollbar(frm, orient="vertical", command=self._tree.yview)
         hsb = ttk.Scrollbar(frm, orient="horizontal", command=self._tree.xview)
@@ -58,9 +62,10 @@ class ResultsView(ttk.Frame):
         frm.columnconfigure(0, weight=1)
 
         # Row tag styles
-        self._tree.tag_configure("oddrow", background="#F0F0FF")
-        self._tree.tag_configure("evenrow", background="#FFFFFF")
-        self._tree.tag_configure("top3", background="#FFF9C4")
+        self._tree.tag_configure("oddrow", background=theme.TABLE_ODD)
+        self._tree.tag_configure("evenrow", background=theme.TABLE_EVEN)
+        self._tree.tag_configure("top3", background=theme.TABLE_TOP3,
+                                  font=(theme.FONT_FAMILY, 9, "bold"))
 
     def load_competition(self, comp_id: int):
         self._comp_id = comp_id

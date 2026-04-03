@@ -9,20 +9,16 @@ from tkinter import ttk
 import time
 import threading
 from typing import Callable, Optional
+from gui import theme
 
 
-class LaneCard(ttk.Frame):
-    """A single lane timer card."""
+class LaneCard(tk.Frame):
+    """A single lane timer card with professional styling."""
 
     def __init__(self, parent, lane: int,
                  on_stop: Callable[[int, int], None]):
-        """
-        Parameters
-        ----------
-        lane     : 1-based lane number
-        on_stop  : called with (lane, elapsed_ms) when lane is stopped
-        """
-        super().__init__(parent, relief="ridge", borderwidth=2)
+        super().__init__(parent, bg=theme.BG_CARD, highlightbackground=theme.BORDER_MEDIUM,
+                         highlightthickness=1, padx=1, pady=1)
         self._lane = lane
         self._on_stop = on_stop
         self._stopped = False
@@ -32,32 +28,57 @@ class LaneCard(ttk.Frame):
         self._name_var = tk.StringVar(value="")
         self._school_var = tk.StringVar(value="")
 
-        # ── Build card ─────────────────────────────────────────────────────
-        lane_lbl = ttk.Label(self, text=f"Lane {lane}",
-                             font=("Arial", 10, "bold"), foreground="#1F4E79")
-        lane_lbl.pack(pady=(6, 0))
+        # ── Lane header strip ────────────────────────────────────────────
+        header = tk.Frame(self, bg=theme.PRIMARY, height=30)
+        header.pack(fill="x")
+        header.pack_propagate(False)
+        tk.Label(header, text=f"LANE {lane}",
+                 font=theme.FONT_LANE_LABEL, fg=theme.TEXT_ON_PRIMARY,
+                 bg=theme.PRIMARY).pack(side="left", padx=10)
 
-        ttk.Label(self, textvariable=self._name_var,
-                  font=("Arial", 8), foreground="#333333",
-                  wraplength=110).pack()
-        ttk.Label(self, textvariable=self._school_var,
-                  font=("Arial", 7, "italic"), foreground="#666666",
-                  wraplength=110).pack()
+        self._rank_lbl = tk.Label(header, text="",
+                                   font=theme.FONT_SMALL_BOLD,
+                                   fg=theme.WARNING, bg=theme.PRIMARY)
+        self._rank_lbl.pack(side="right", padx=10)
 
-        self._time_lbl = ttk.Label(self, text="00:00.000",
-                                   font=("Courier", 14, "bold"),
-                                   foreground="#006400")
-        self._time_lbl.pack(pady=4)
+        # ── Body ─────────────────────────────────────────────────────────
+        body = tk.Frame(self, bg=theme.BG_CARD)
+        body.pack(fill="both", expand=True, padx=8, pady=4)
 
-        self._status_lbl = ttk.Label(self, text="SIAP",
-                                     font=("Arial", 8),
-                                     foreground="#999999")
+        tk.Label(body, textvariable=self._name_var,
+                 font=theme.FONT_BODY_BOLD, fg=theme.TEXT_PRIMARY,
+                 bg=theme.BG_CARD, wraplength=130, anchor="w").pack(
+            fill="x", pady=(4, 0))
+        tk.Label(body, textvariable=self._school_var,
+                 font=theme.FONT_SMALL_ITALIC, fg=theme.TEXT_SECONDARY,
+                 bg=theme.BG_CARD, wraplength=130, anchor="w").pack(
+            fill="x")
+
+        # Timer display
+        self._time_lbl = tk.Label(body, text="00:00.000",
+                                   font=theme.FONT_TIMER_CARD,
+                                   fg=theme.TIMER_READY,
+                                   bg=theme.BG_CARD)
+        self._time_lbl.pack(pady=(6, 2))
+
+        self._status_lbl = tk.Label(body, text="SIAP",
+                                     font=theme.FONT_SMALL_BOLD,
+                                     fg=theme.TEXT_MUTED,
+                                     bg=theme.BG_CARD)
         self._status_lbl.pack()
 
-        self._stop_btn = ttk.Button(self, text="STOP",
-                                    command=self._stop_clicked)
-        self._stop_btn.pack(pady=(4, 6))
-        self._stop_btn.config(state="disabled")
+        # Stop button
+        self._stop_btn = tk.Button(body, text="■  STOP",
+                                    font=theme.FONT_SMALL_BOLD,
+                                    bg=theme.DANGER, fg="white",
+                                    activebackground=theme.DANGER_HOVER,
+                                    activeforeground="white",
+                                    relief="flat", padx=12, pady=3,
+                                    cursor="hand2",
+                                    command=self._stop_clicked,
+                                    state="disabled",
+                                    disabledforeground=theme.TEXT_MUTED)
+        self._stop_btn.pack(pady=(4, 8))
 
     # ── Public API ──────────────────────────────────────────────────────────
 
@@ -69,16 +90,20 @@ class LaneCard(ttk.Frame):
         """Called just before the race starts – re-enable stop button."""
         self._stopped = False
         self._stop_time_ms = None
-        self._time_lbl.config(text="00:00.000", foreground="#006400")
-        self._status_lbl.config(text="BERLARI", foreground="#CC5500")
-        self._stop_btn.config(state="normal")
+        self._time_lbl.config(text="00:00.000", fg=theme.TIMER_RUNNING)
+        self._status_lbl.config(text="BERLARI ●", fg=theme.TIMER_RUNNING)
+        self._stop_btn.config(state="normal", bg=theme.DANGER)
+        self._rank_lbl.config(text="")
+        self.config(highlightbackground=theme.TIMER_RUNNING, highlightthickness=2)
 
     def reset(self):
         self._stopped = False
         self._stop_time_ms = None
-        self._time_lbl.config(text="00:00.000", foreground="#006400")
-        self._status_lbl.config(text="SIAP", foreground="#999999")
+        self._time_lbl.config(text="00:00.000", fg=theme.TIMER_READY)
+        self._status_lbl.config(text="SIAP", fg=theme.TEXT_MUTED)
         self._stop_btn.config(state="disabled")
+        self._rank_lbl.config(text="")
+        self.config(highlightbackground=theme.BORDER_MEDIUM, highlightthickness=1)
 
     def update_display(self, elapsed_ms: int):
         """Called by timer thread (via after) to update the display."""
@@ -90,9 +115,10 @@ class LaneCard(ttk.Frame):
         if not self._stopped:
             self._stopped = True
             self._stop_time_ms = elapsed_ms
-            self._time_lbl.config(text=_fmt(elapsed_ms), foreground="#CC0000")
-            self._status_lbl.config(text="SELESAI", foreground="#006400")
+            self._time_lbl.config(text=_fmt(elapsed_ms), fg=theme.TIMER_STOPPED)
+            self._status_lbl.config(text="✓ SELESAI", fg=theme.SUCCESS)
             self._stop_btn.config(state="disabled")
+            self.config(highlightbackground=theme.SUCCESS, highlightthickness=2)
 
     @property
     def stopped(self) -> bool:
@@ -105,11 +131,10 @@ class LaneCard(ttk.Frame):
     # ── Private ─────────────────────────────────────────────────────────────
 
     def _stop_clicked(self):
-        # We don't know the exact elapsed_ms here; the panel will handle it
         self._stop_btn.config(state="disabled")
-        self._status_lbl.config(text="SELESAI", foreground="#006400")
-        self._time_lbl.config(foreground="#CC0000")
-        # Signal will be sent up via on_stop with None – panel fills in time
+        self._status_lbl.config(text="✓ SELESAI", fg=theme.SUCCESS)
+        self._time_lbl.config(fg=theme.TIMER_STOPPED)
+        self.config(highlightbackground=theme.SUCCESS, highlightthickness=2)
         self._on_stop(self._lane, None)
 
 
@@ -147,39 +172,52 @@ class TimerPanel(ttk.Frame):
     # ── Build UI ────────────────────────────────────────────────────────────
 
     def _build_controls(self):
-        ctrl = ttk.Frame(self)
-        ctrl.pack(fill="x", padx=6, pady=4)
+        ctrl = tk.Frame(self, bg=theme.BG_CARD, highlightbackground=theme.BORDER_LIGHT,
+                        highlightthickness=1)
+        ctrl.pack(fill="x", padx=4, pady=(4, 6))
+
+        # Left: action buttons
+        btn_frame = tk.Frame(ctrl, bg=theme.BG_CARD)
+        btn_frame.pack(side="left", padx=8, pady=8)
 
         self._start_btn = tk.Button(
-            ctrl, text="▶  START LOMBA", font=("Arial", 13, "bold"),
-            bg="#28a745", fg="white", activebackground="#218838",
-            activeforeground="white", width=18, height=2,
+            btn_frame, text="▶  START LOMBA", font=theme.FONT_BUTTON_LARGE,
+            bg=theme.SUCCESS, fg="white",
+            activebackground=theme.SUCCESS_HOVER, activeforeground="white",
+            relief="flat", width=16, height=2, cursor="hand2",
             command=self._start_race,
         )
-        self._start_btn.pack(side="left", padx=6)
+        self._start_btn.pack(side="left", padx=(0, 8))
 
         self._reset_btn = tk.Button(
-            ctrl, text="⏹  RESET SEMUA", font=("Arial", 13, "bold"),
-            bg="#dc3545", fg="white", activebackground="#c82333",
-            activeforeground="white", width=18, height=2,
+            btn_frame, text="⏹  RESET SEMUA", font=theme.FONT_BUTTON_LARGE,
+            bg=theme.DANGER, fg="white",
+            activebackground=theme.DANGER_HOVER, activeforeground="white",
+            relief="flat", width=16, height=2, cursor="hand2",
             command=self._reset_all,
         )
-        self._reset_btn.pack(side="left", padx=6)
+        self._reset_btn.pack(side="left")
 
-        self._elapsed_lbl = ttk.Label(ctrl, text="00:00.000",
-                                      font=("Courier", 20, "bold"),
-                                      foreground="#1F4E79")
-        self._elapsed_lbl.pack(side="right", padx=12)
+        # Right: elapsed time display
+        time_frame = tk.Frame(ctrl, bg=theme.BG_CARD)
+        time_frame.pack(side="right", padx=12, pady=8)
 
-        ttk.Label(ctrl, text="Waktu:", font=("Arial", 11)).pack(side="right")
+        tk.Label(time_frame, text="WAKTU LOMBA",
+                 font=theme.FONT_TINY, fg=theme.TEXT_MUTED,
+                 bg=theme.BG_CARD).pack()
+        self._elapsed_lbl = tk.Label(time_frame, text="00:00.000",
+                                      font=theme.FONT_TIMER_LARGE,
+                                      fg=theme.TIMER_DISPLAY,
+                                      bg=theme.BG_CARD)
+        self._elapsed_lbl.pack()
 
     def _build_lanes(self):
         if hasattr(self, "_lanes_frame"):
             self._lanes_frame.destroy()
             self._cards.clear()
 
-        self._lanes_frame = ttk.Frame(self)
-        self._lanes_frame.pack(fill="both", expand=True, padx=6, pady=4)
+        self._lanes_frame = tk.Frame(self, bg=theme.BG_MAIN)
+        self._lanes_frame.pack(fill="both", expand=True, padx=4, pady=4)
 
         cols = 4 if self._num_lanes > 8 else (
             4 if self._num_lanes > 4 else (2 if self._num_lanes > 2 else 1)
@@ -191,7 +229,7 @@ class TimerPanel(ttk.Frame):
             card = LaneCard(self._lanes_frame, lane, self._lane_stop_handler)
             row = (lane - 1) // cols
             col = (lane - 1) % cols
-            card.grid(row=row, column=col, padx=4, pady=4, sticky="nsew")
+            card.grid(row=row, column=col, padx=5, pady=5, sticky="nsew")
             self._lanes_frame.rowconfigure(row, weight=1)
             self._cards[lane] = card
 
@@ -215,7 +253,7 @@ class TimerPanel(ttk.Frame):
             self.after_cancel(self._tick_job)
             self._tick_job = None
         self._start_time = None
-        self._elapsed_lbl.config(text="00:00.000")
+        self._elapsed_lbl.config(text="00:00.000", fg=theme.TIMER_DISPLAY)
         self._start_btn.config(state="normal")
         for card in self._cards.values():
             card.reset()

@@ -10,6 +10,7 @@ from gui.timer_panel import TimerPanel
 from gui.settings_dialog import SettingsDialog
 from gui.competition_setup import CompetitionDialog, EventDialog, AthleteEntryDialog
 from gui.results_view import ResultsView
+from gui import theme
 
 
 class MainWindow:
@@ -37,39 +38,52 @@ class MainWindow:
     # ── UI Builder ───────────────────────────────────────────────────────────
 
     def _build_ui(self):
-        self.root.configure(bg="#F0F4F8")
-        style = ttk.Style()
-        style.theme_use("clam")
-        style.configure("TNotebook.Tab", font=("Arial", 10, "bold"), padding=[10, 4])
-        style.configure("TLabelframe.Label", font=("Arial", 10, "bold"))
+        theme.apply_theme(self.root)
 
         # Header bar
-        header = tk.Frame(self.root, bg="#1F4E79", height=52)
+        header = tk.Frame(self.root, bg=theme.BG_HEADER, height=56)
         header.pack(fill="x")
         header.pack_propagate(False)
-        tk.Label(header, text="🏊  SISTEM TIMER RENANG",
-                 font=("Arial", 16, "bold"), fg="white", bg="#1F4E79").pack(
-            side="left", padx=14, pady=8)
+
+        # App icon area
+        icon_frame = tk.Frame(header, bg=theme.PRIMARY_DARK, width=56, height=56)
+        icon_frame.pack(side="left", fill="y")
+        icon_frame.pack_propagate(False)
+        tk.Label(icon_frame, text="🏊", font=(theme.FONT_FAMILY, 22),
+                 bg=theme.PRIMARY_DARK, fg="white").place(relx=0.5, rely=0.5,
+                                                           anchor="center")
+
+        tk.Label(header, text="SISTEM TIMER RENANG",
+                 font=theme.FONT_HEADER, fg=theme.TEXT_ON_PRIMARY,
+                 bg=theme.BG_HEADER).pack(side="left", padx=14, pady=8)
 
         # ESP32 status
         self._esp32_status_var = tk.StringVar(value="ESP32: Tidak Terhubung")
         self._esp32_status_lbl = tk.Label(
             header, textvariable=self._esp32_status_var,
-            font=("Arial", 9), fg="#FFD700", bg="#1F4E79")
+            font=theme.FONT_SMALL, fg=theme.WARNING, bg=theme.BG_HEADER)
         self._esp32_status_lbl.pack(side="right", padx=14)
+
+        # ESP32 status dot
+        self._esp32_dot = tk.Canvas(header, width=10, height=10,
+                                     bg=theme.BG_HEADER, highlightthickness=0)
+        self._esp32_dot.create_oval(1, 1, 9, 9, fill=theme.DANGER,
+                                     outline="", tags="dot")
+        self._esp32_dot.pack(side="right")
 
         # Connect button
         self._connect_btn = tk.Button(
-            header, text="Hubungkan ESP32",
-            font=("Arial", 9, "bold"), bg="#28a745", fg="white",
-            relief="flat", padx=8, pady=2,
+            header, text="⚡ Hubungkan ESP32",
+            font=theme.FONT_SMALL_BOLD, bg=theme.SUCCESS, fg="white",
+            activebackground=theme.SUCCESS_HOVER, activeforeground="white",
+            relief="flat", padx=12, pady=4, cursor="hand2",
             command=self._toggle_esp32,
         )
         self._connect_btn.pack(side="right", padx=6)
 
         # Notebook tabs
         self._nb = ttk.Notebook(self.root)
-        self._nb.pack(fill="both", expand=True, padx=8, pady=6)
+        self._nb.pack(fill="both", expand=True, padx=10, pady=(8, 4))
 
         self._build_tab_timer()
         self._build_tab_setup()
@@ -77,46 +91,54 @@ class MainWindow:
         self._build_tab_export()
 
         # Status bar
+        status_bar = tk.Frame(self.root, bg=theme.BG_STATUS, height=28)
+        status_bar.pack(fill="x", side="bottom")
+        status_bar.pack_propagate(False)
+        tk.Frame(status_bar, bg=theme.ACCENT, width=4).pack(side="left", fill="y")
         self._status_var = tk.StringVar(value="Siap.")
-        tk.Label(self.root, textvariable=self._status_var,
-                 font=("Arial", 9), relief="sunken",
-                 anchor="w", bg="#E8EDF2").pack(fill="x", side="bottom")
+        tk.Label(status_bar, textvariable=self._status_var,
+                 font=theme.FONT_STATUS, anchor="w",
+                 bg=theme.BG_STATUS, fg=theme.TEXT_SECONDARY,
+                 padx=10).pack(fill="x", side="left", expand=True)
 
     # ── Tab: Timer ───────────────────────────────────────────────────────────
 
     def _build_tab_timer(self):
         frm = ttk.Frame(self._nb)
-        self._nb.add(frm, text="⏱  Timer")
+        self._nb.add(frm, text="  ⏱  Timer  ")
 
         # Top selector bar
-        sel = ttk.LabelFrame(frm, text="Pilih Heat Aktif")
-        sel.pack(fill="x", padx=8, pady=(6, 2))
+        sel = ttk.LabelFrame(frm, text="  Pilih Heat Aktif  ")
+        sel.pack(fill="x", padx=10, pady=(8, 4))
 
-        pad = {"padx": 6, "pady": 4}
-        ttk.Label(sel, text="Kompetisi:").grid(row=0, column=0, **pad, sticky="w")
+        pad = {"padx": 8, "pady": 6}
+        ttk.Label(sel, text="Kompetisi:", font=theme.FONT_SMALL_BOLD).grid(
+            row=0, column=0, **pad, sticky="w")
         self._timer_comp_var = tk.StringVar()
         self._timer_comp_cb = ttk.Combobox(sel, textvariable=self._timer_comp_var,
                                            width=28, state="readonly")
         self._timer_comp_cb.grid(row=0, column=1, **pad)
         self._timer_comp_cb.bind("<<ComboboxSelected>>", self._on_timer_comp_changed)
 
-        ttk.Label(sel, text="Acara:").grid(row=0, column=2, **pad, sticky="w")
+        ttk.Label(sel, text="Acara:", font=theme.FONT_SMALL_BOLD).grid(
+            row=0, column=2, **pad, sticky="w")
         self._timer_event_var = tk.StringVar()
         self._timer_event_cb = ttk.Combobox(sel, textvariable=self._timer_event_var,
                                             width=32, state="readonly")
         self._timer_event_cb.grid(row=0, column=3, **pad)
         self._timer_event_cb.bind("<<ComboboxSelected>>", self._on_timer_event_changed)
 
-        ttk.Label(sel, text="Heat:").grid(row=0, column=4, **pad, sticky="w")
+        ttk.Label(sel, text="Heat:", font=theme.FONT_SMALL_BOLD).grid(
+            row=0, column=4, **pad, sticky="w")
         self._timer_heat_var = tk.StringVar()
         self._timer_heat_cb = ttk.Combobox(sel, textvariable=self._timer_heat_var,
                                            width=10, state="readonly")
         self._timer_heat_cb.grid(row=0, column=5, **pad)
         self._timer_heat_cb.bind("<<ComboboxSelected>>", self._on_timer_heat_changed)
 
-        ttk.Button(sel, text="Input Atlet", command=self._open_athlete_entry).grid(
+        ttk.Button(sel, text="👤 Input Atlet", command=self._open_athlete_entry).grid(
             row=0, column=6, **pad)
-        ttk.Button(sel, text="Simpan Hasil", command=self._save_heat_results).grid(
+        ttk.Button(sel, text="💾 Simpan Hasil", command=self._save_heat_results).grid(
             row=0, column=7, **pad)
 
         # Timer panel
@@ -126,7 +148,7 @@ class MainWindow:
             on_lane_stopped=self._on_lane_stopped,
             esp32=self._esp32,
         )
-        self._timer_panel.pack(fill="both", expand=True, padx=8, pady=4)
+        self._timer_panel.pack(fill="both", expand=True, padx=10, pady=6)
 
         self._refresh_timer_comps()
 
@@ -134,48 +156,57 @@ class MainWindow:
 
     def _build_tab_setup(self):
         frm = ttk.Frame(self._nb)
-        self._nb.add(frm, text="📋  Setup Kompetisi")
+        self._nb.add(frm, text="  📋  Setup Kompetisi  ")
 
         # Competitions list
-        left = ttk.LabelFrame(frm, text="Kompetisi")
-        left.pack(side="left", fill="y", padx=(8, 4), pady=8)
+        left = ttk.LabelFrame(frm, text="  Kompetisi  ")
+        left.pack(side="left", fill="both", expand=True, padx=(10, 4), pady=8)
 
         btn_row = ttk.Frame(left)
-        btn_row.pack(fill="x", pady=2)
-        ttk.Button(btn_row, text="+ Baru", command=self._add_comp).pack(side="left", padx=2)
-        ttk.Button(btn_row, text="✏ Edit", command=self._edit_comp).pack(side="left", padx=2)
-        ttk.Button(btn_row, text="🗑 Hapus", command=self._del_comp).pack(side="left", padx=2)
+        btn_row.pack(fill="x", pady=(4, 2), padx=4)
+        ttk.Button(btn_row, text="＋ Baru", command=self._add_comp).pack(
+            side="left", padx=2)
+        ttk.Button(btn_row, text="✏ Edit", command=self._edit_comp).pack(
+            side="left", padx=2)
+        ttk.Button(btn_row, text="🗑 Hapus", style="Danger.TButton",
+                   command=self._del_comp).pack(side="left", padx=2)
 
-        self._comp_list = tk.Listbox(left, width=30, height=18, font=("Arial", 10))
-        self._comp_list.pack(fill="both", expand=True, padx=4, pady=4)
+        self._comp_list = tk.Listbox(left, width=30, height=18)
+        self._comp_list.pack(fill="both", expand=True, padx=6, pady=(2, 6))
         self._comp_list.bind("<<ListboxSelect>>", self._on_comp_selected)
 
         # Events list
-        mid = ttk.LabelFrame(frm, text="Acara")
-        mid.pack(side="left", fill="y", padx=4, pady=8)
+        mid = ttk.LabelFrame(frm, text="  Acara  ")
+        mid.pack(side="left", fill="both", expand=True, padx=4, pady=8)
 
         btn_row2 = ttk.Frame(mid)
-        btn_row2.pack(fill="x", pady=2)
-        ttk.Button(btn_row2, text="+ Baru", command=self._add_event).pack(side="left", padx=2)
-        ttk.Button(btn_row2, text="✏ Edit", command=self._edit_event).pack(side="left", padx=2)
-        ttk.Button(btn_row2, text="🗑 Hapus", command=self._del_event).pack(side="left", padx=2)
+        btn_row2.pack(fill="x", pady=(4, 2), padx=4)
+        ttk.Button(btn_row2, text="＋ Baru", command=self._add_event).pack(
+            side="left", padx=2)
+        ttk.Button(btn_row2, text="✏ Edit", command=self._edit_event).pack(
+            side="left", padx=2)
+        ttk.Button(btn_row2, text="🗑 Hapus", style="Danger.TButton",
+                   command=self._del_event).pack(side="left", padx=2)
 
-        self._event_list = tk.Listbox(mid, width=40, height=18, font=("Arial", 10))
-        self._event_list.pack(fill="both", expand=True, padx=4, pady=4)
+        self._event_list = tk.Listbox(mid, width=40, height=18)
+        self._event_list.pack(fill="both", expand=True, padx=6, pady=(2, 6))
         self._event_list.bind("<<ListboxSelect>>", self._on_event_selected)
 
         # Heats list
-        right = ttk.LabelFrame(frm, text="Heat")
-        right.pack(side="left", fill="y", padx=(4, 8), pady=8)
+        right = ttk.LabelFrame(frm, text="  Heat  ")
+        right.pack(side="left", fill="both", expand=True, padx=(4, 10), pady=8)
 
         btn_row3 = ttk.Frame(right)
-        btn_row3.pack(fill="x", pady=2)
-        ttk.Button(btn_row3, text="+ Heat", command=self._add_heat).pack(side="left", padx=2)
-        ttk.Button(btn_row3, text="🗑 Hapus", command=self._del_heat).pack(side="left", padx=2)
-        ttk.Button(btn_row3, text="Input Atlet", command=self._open_athlete_entry_setup).pack(side="left", padx=2)
+        btn_row3.pack(fill="x", pady=(4, 2), padx=4)
+        ttk.Button(btn_row3, text="＋ Heat", command=self._add_heat).pack(
+            side="left", padx=2)
+        ttk.Button(btn_row3, text="🗑 Hapus", style="Danger.TButton",
+                   command=self._del_heat).pack(side="left", padx=2)
+        ttk.Button(btn_row3, text="👤 Input Atlet",
+                   command=self._open_athlete_entry_setup).pack(side="left", padx=2)
 
-        self._heat_list = tk.Listbox(right, width=20, height=18, font=("Arial", 10))
-        self._heat_list.pack(fill="both", expand=True, padx=4, pady=4)
+        self._heat_list = tk.Listbox(right, width=20, height=18)
+        self._heat_list.pack(fill="both", expand=True, padx=6, pady=(2, 6))
 
         self._setup_comps: list = []
         self._setup_events: list = []
@@ -186,20 +217,21 @@ class MainWindow:
 
     def _build_tab_results(self):
         frm = ttk.Frame(self._nb)
-        self._nb.add(frm, text="🏆  Hasil Lomba")
+        self._nb.add(frm, text="  🏆  Hasil Lomba  ")
 
         top = ttk.Frame(frm)
-        top.pack(fill="x", padx=8, pady=4)
-        ttk.Label(top, text="Kompetisi:").pack(side="left")
+        top.pack(fill="x", padx=10, pady=(8, 4))
+        ttk.Label(top, text="Kompetisi:", font=theme.FONT_SMALL_BOLD).pack(side="left")
         self._res_comp_var = tk.StringVar()
         self._res_comp_cb = ttk.Combobox(top, textvariable=self._res_comp_var,
                                          width=32, state="readonly")
-        self._res_comp_cb.pack(side="left", padx=4)
+        self._res_comp_cb.pack(side="left", padx=6)
         self._res_comp_cb.bind("<<ComboboxSelected>>", self._on_res_comp_changed)
-        ttk.Button(top, text="Tampilkan", command=self._show_results).pack(side="left", padx=4)
+        ttk.Button(top, text="📊 Tampilkan", command=self._show_results).pack(
+            side="left", padx=4)
 
         self._results_view = ResultsView(frm)
-        self._results_view.pack(fill="both", expand=True)
+        self._results_view.pack(fill="both", expand=True, padx=10, pady=(0, 6))
 
         self._refresh_res_comps()
 
@@ -207,29 +239,36 @@ class MainWindow:
 
     def _build_tab_export(self):
         frm = ttk.Frame(self._nb)
-        self._nb.add(frm, text="💾  Ekspor")
+        self._nb.add(frm, text="  💾  Ekspor  ")
 
-        inner = ttk.LabelFrame(frm, text="Ekspor Hasil Lomba")
-        inner.pack(padx=20, pady=20, fill="x")
+        # Center content
+        center = ttk.Frame(frm)
+        center.place(relx=0.5, rely=0.4, anchor="center")
 
-        ttk.Label(inner, text="Pilih Kompetisi:").grid(row=0, column=0, padx=8, pady=6, sticky="w")
+        inner = ttk.LabelFrame(center, text="  Ekspor Hasil Lomba  ")
+        inner.pack(padx=20, pady=20)
+
+        ttk.Label(inner, text="Pilih Kompetisi:",
+                  font=theme.FONT_SMALL_BOLD).grid(
+            row=0, column=0, padx=12, pady=8, sticky="w")
         self._exp_comp_var = tk.StringVar()
         self._exp_comp_cb = ttk.Combobox(inner, textvariable=self._exp_comp_var,
                                          width=36, state="readonly")
-        self._exp_comp_cb.grid(row=0, column=1, padx=8, pady=6)
+        self._exp_comp_cb.grid(row=0, column=1, padx=12, pady=8)
 
-        ttk.Button(inner, text="📊  Ekspor ke Excel (.xlsx)",
-                   command=self._export_excel).grid(row=1, column=0, columnspan=2,
-                                                    padx=8, pady=6, sticky="w")
-        ttk.Button(inner, text="📄  Ekspor ke PDF (.pdf)",
-                   command=self._export_pdf).grid(row=2, column=0, columnspan=2,
-                                                  padx=8, pady=6, sticky="w")
+        btn_frame = ttk.Frame(inner)
+        btn_frame.grid(row=1, column=0, columnspan=2, padx=12, pady=(4, 4),
+                       sticky="ew")
+        ttk.Button(btn_frame, text="📊  Ekspor ke Excel (.xlsx)",
+                   command=self._export_excel).pack(fill="x", pady=4)
+        ttk.Button(btn_frame, text="📄  Ekspor ke PDF (.pdf)",
+                   command=self._export_pdf).pack(fill="x", pady=4)
 
-        # Settings button
-        ttk.Separator(inner).grid(row=3, column=0, columnspan=2, sticky="ew", pady=8)
+        ttk.Separator(inner).grid(row=2, column=0, columnspan=2,
+                                  sticky="ew", padx=12, pady=10)
         ttk.Button(inner, text="⚙  Pengaturan (Lintasan & ESP32)",
-                   command=self._open_settings).grid(row=4, column=0, columnspan=2,
-                                                     padx=8, pady=4, sticky="w")
+                   command=self._open_settings).grid(
+            row=3, column=0, columnspan=2, padx=12, pady=(0, 12), sticky="ew")
 
         self._refresh_exp_comps()
 
@@ -238,7 +277,8 @@ class MainWindow:
     def _toggle_esp32(self):
         if self._esp32.is_connected:
             self._esp32.disconnect()
-            self._connect_btn.config(text="Hubungkan ESP32", bg="#28a745")
+            self._connect_btn.config(text="⚡ Hubungkan ESP32", bg=theme.SUCCESS)
+            self._esp32_dot.itemconfig("dot", fill=theme.DANGER)
         else:
             port = self._settings.get("port", "")
             baud = self._settings.get("baud", 115200)
@@ -247,7 +287,8 @@ class MainWindow:
                 return
             ok = self._esp32.connect(port, baud)
             if ok:
-                self._connect_btn.config(text="Putuskan ESP32", bg="#dc3545")
+                self._connect_btn.config(text="⏏ Putuskan ESP32", bg=theme.DANGER)
+                self._esp32_dot.itemconfig("dot", fill=theme.SUCCESS)
 
     def _esp32_lane_stopped(self, lane: int, time_ms: int):
         """Called from background thread."""
