@@ -35,7 +35,7 @@ Kompetisi  (KEJURKAB TAHUN 2024)
 pip install -r requirements.txt
 ```
 
-> Membutuhkan Python 3.10+ dengan `tkinter` (termasuk di instalasi standar Python).
+> Membutuhkan Python 3.7+ dengan `tkinter` (termasuk di instalasi standar Python dari python.org).
 
 ---
 
