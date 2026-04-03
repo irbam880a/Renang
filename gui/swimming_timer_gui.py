@@ -327,8 +327,8 @@ def generate_catatan_waktu_html(race: dict, time_map: dict[int, int],
           <div class="waktu-sec">
             <strong>WAKTU</strong>
             <div class="w-row"><span class="w-num">: 1</span><span class="w-line">{waktu1}</span></div>
-            <div class="w-row"><span class="w-num">&nbsp; 2</span><span class="w-line"></span></div>
-            <div class="w-row"><span class="w-num">&nbsp; 3</span><span class="w-line"></span></div>
+            <div class="w-row"><span class="w-num" style="padding-left:4px">2</span><span class="w-line"></span></div>
+            <div class="w-row"><span class="w-num" style="padding-left:4px">3</span><span class="w-line"></span></div>
           </div>
           <div class="ket">Keterangan : Did Not Start / No Time **</div>
           <div class="sig-row">
