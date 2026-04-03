@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Timer Renang – 16 Lintasan</title>
+  <style>
+    :root {
+      --blue:   #1565c0;
+      --cyan:   #00acc1;
+      --green:  #2e7d32;
+      --red:    #c62828;
+      --bg:     #0d1b2a;
+      --card:   #13293d;
+      --border: #1b4965;
+      --text:   #e0f0ff;
+      --muted:  #7aafc8;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', Arial, sans-serif;
+      min-height: 100vh;
+      padding: 16px;
+    }
+
+    header {
+      text-align: center;
+      padding: 20px 0 12px;
+    }
+    header h1 {
+      font-size: 2rem;
+      color: var(--cyan);
+      letter-spacing: 2px;
+    }
+    header p {
+      color: var(--muted);
+      font-size: 0.95rem;
+      margin-top: 4px;
+    }
+
+    /* ── Status bar ─────────────────────────────────────────────── */
+    #status-bar {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 24px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 20px;
+      margin: 16px auto;
+      max-width: 700px;
+      flex-wrap: wrap;
+    }
+    #status-bar .label { color: var(--muted); font-size: 0.82rem; text-transform: uppercase; letter-spacing: 1px; }
+    #status-bar .value { font-size: 1.1rem; font-weight: 700; }
+    #race-status   { color: #ffd54f; }
+    #race-heat     { color: var(--cyan); }
+    #race-elapsed  { color: #80cbc4; font-variant-numeric: tabular-nums; }
+
+    /* ── Control buttons ────────────────────────────────────────── */
+    #controls {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      margin: 12px 0 20px;
+      flex-wrap: wrap;
+    }
+    button {
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.95rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      padding: 10px 24px;
+      transition: opacity 0.15s, transform 0.1s;
+    }
+    button:active { transform: scale(0.96); }
+    button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    #btn-start-a { background: var(--green); color: #fff; }
+    #btn-start-b { background: var(--blue);  color: #fff; }
+    #btn-reset   { background: var(--red);   color: #fff; }
+
+    /* ── Lane grid ──────────────────────────────────────────────── */
+    #lane-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 12px;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .lane-card {
+      background: var(--card);
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 16px;
+      transition: border-color 0.3s, box-shadow 0.3s;
+      position: relative;
+      overflow: hidden;
+    }
+    .lane-card.finished {
+      border-color: var(--cyan);
+      box-shadow: 0 0 12px rgba(0, 172, 193, 0.35);
+    }
+    .lane-card.rank-1 { border-color: gold;   box-shadow: 0 0 14px rgba(255,215,0,0.45); }
+    .lane-card.rank-2 { border-color: silver; box-shadow: 0 0 12px rgba(192,192,192,0.35); }
+    .lane-card.rank-3 { border-color: #cd7f32; }
+
+    .lane-number {
+      font-size: 0.78rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .lane-name {
+      font-size: 1.05rem;
+      font-weight: 700;
+      margin: 2px 0 8px;
+    }
+    .lane-time {
+      font-size: 1.7rem;
+      font-weight: 900;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: 1px;
+      color: var(--cyan);
+    }
+    .lane-card.finished .lane-time { color: #fff; }
+    .lane-card.rank-1 .lane-time   { color: gold; }
+    .lane-card.rank-2 .lane-time   { color: silver; }
+
+    .rank-badge {
+      position: absolute;
+      top: 10px;
+      right: 12px;
+      font-size: 1.4rem;
+    }
+
+    /* ── History table ──────────────────────────────────────────── */
+    #history-section {
+      max-width: 900px;
+      margin: 32px auto 0;
+    }
+    #history-section h2 {
+      color: var(--cyan);
+      font-size: 1.2rem;
+      margin-bottom: 10px;
+      letter-spacing: 1px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+    }
+    th {
+      background: var(--border);
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      padding: 8px 12px;
+      text-align: left;
+    }
+    td {
+      padding: 7px 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    tr:hover td { background: rgba(255,255,255,0.04); }
+
+    footer {
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.78rem;
+      margin-top: 40px;
+      padding-bottom: 16px;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>🏊 Timer Renang</h1>
+  <p>16 Lintasan &nbsp;|&nbsp; ESP32 + Database</p>
+</header>
+
+<!-- Status bar -->
+<div id="status-bar">
+  <div>
+    <div class="label">Status</div>
+    <div class="value" id="race-status">Menunggu Start</div>
+  </div>
+  <div>
+    <div class="label">Heat</div>
+    <div class="value" id="race-heat">—</div>
+  </div>
+  <div>
+    <div class="label">Waktu Berjalan</div>
+    <div class="value" id="race-elapsed">00:00.000</div>
+  </div>
+</div>
+
+<!-- Manual controls (mirrors hardware buttons – useful for testing) -->
+<div id="controls">
+  <button id="btn-start-a">▶ START A</button>
+  <button id="btn-start-b">▶ START B</button>
+  <button id="btn-reset">↺ RESET SEMUA</button>
+</div>
+
+<!-- 16-lane cards -->
+<div id="lane-grid"></div>
+
+<!-- Race history -->
+<section id="history-section">
+  <h2>Riwayat Lomba</h2>
+  <table id="history-table">
+    <thead>
+      <tr>
+        <th>#</th><th>Heat</th><th>Waktu Mulai</th><th>Lintasan</th><th>Waktu (mm:ss.ms)</th>
+      </tr>
+    </thead>
+    <tbody id="history-body"></tbody>
+  </table>
+</section>
+
+<footer>Swimming Timer &copy; 2024 &mdash; ESP32 / Node.js / SQLite</footer>
+
+<script>
+(() => {
+  'use strict';
+
+  const NUM_LANES = 16;
+  const POLL_MS   = 1000;   // refresh interval
+
+  // ── Build lane cards ────────────────────────────────────────────
+  const grid = document.getElementById('lane-grid');
+  for (let i = 1; i <= NUM_LANES; i++) {
+    const card = document.createElement('div');
+    card.className = 'lane-card';
+    card.id = `lane-${i}`;
+    card.innerHTML = `
+      <div class="lane-number">Lintasan ${i}</div>
+      <div class="lane-name"></div>
+      <div class="lane-time">—</div>
+      <div class="rank-badge"></div>
+    `;
+    grid.appendChild(card);
+  }
+
+  // ── Helpers ─────────────────────────────────────────────────────
+  function fmtMs(ms) {
+    if (ms == null) return '—';
+    const m  = Math.floor(ms / 60000);
+    const s  = Math.floor((ms % 60000) / 1000);
+    const ms3 = ms % 1000;
+    return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}.${String(ms3).padStart(3,'0')}`;
+  }
+
+  function rankEmoji(rank) {
+    return rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : '';
+  }
+
+  // ── Elapsed timer (client-side) ─────────────────────────────────
+  let clientStartAt  = null;   // Date.now() when start was received
+  let serverStartedAt = null;  // server-side startedAt for the active race
+  let elapsedTimer   = null;
+
+  function startElapsedTimer(startedAt) {
+    serverStartedAt = startedAt;
+    clientStartAt   = Date.now() - (Date.now() - startedAt);
+    if (elapsedTimer) clearInterval(elapsedTimer);
+    elapsedTimer = setInterval(() => {
+      const elapsed = Date.now() - serverStartedAt;
+      document.getElementById('race-elapsed').textContent = fmtMs(elapsed);
+    }, 50);
+  }
+
+  function stopElapsedTimer() {
+    if (elapsedTimer) clearInterval(elapsedTimer);
+    elapsedTimer = null;
+    document.getElementById('race-elapsed').textContent = '00:00.000';
+  }
+
+  // ── Update UI from server data ──────────────────────────────────
+  function updateUI(data) {
+    const { race, lanes } = data;
+
+    if (!race) {
+      document.getElementById('race-status').textContent = 'Menunggu Start';
+      document.getElementById('race-heat').textContent = '—';
+      stopElapsedTimer();
+      // Clear all cards
+      for (let i = 1; i <= NUM_LANES; i++) {
+        const card = document.getElementById(`lane-${i}`);
+        card.className = 'lane-card';
+        card.querySelector('.lane-time').textContent = '—';
+        card.querySelector('.rank-badge').textContent = '';
+      }
+      return;
+    }
+
+    document.getElementById('race-status').textContent =
+      race.active ? 'Berlomba 🏊' : 'Selesai / Reset';
+    document.getElementById('race-heat').textContent = `Heat ${race.heat}`;
+
+    if (race.active) {
+      startElapsedTimer(race.started_at);
+    } else {
+      stopElapsedTimer();
+    }
+
+    // Map lane → rank
+    const laneMap = {};
+    lanes.forEach((row, idx) => {
+      laneMap[row.lane] = { elapsed_ms: row.elapsed_ms, rank: idx + 1 };
+    });
+
+    for (let i = 1; i <= NUM_LANES; i++) {
+      const card = document.getElementById(`lane-${i}`);
+      const info = laneMap[i];
+      if (info) {
+        card.querySelector('.lane-time').textContent = fmtMs(info.elapsed_ms);
+        card.querySelector('.rank-badge').textContent = rankEmoji(info.rank);
+        card.className = 'lane-card finished' +
+          (info.rank <= 3 ? ` rank-${info.rank}` : '');
+      } else {
+        card.querySelector('.lane-time').textContent = race.active ? '—' : '—';
+        card.querySelector('.rank-badge').textContent = '';
+        card.className = 'lane-card';
+      }
+    }
+  }
+
+  // ── Fetch and render current results ───────────────────────────
+  async function fetchResults() {
+    try {
+      const res  = await fetch('/api/results');
+      const data = await res.json();
+      updateUI(data);
+    } catch (e) {
+      console.error('fetchResults error:', e);
+    }
+  }
+
+  // ── Fetch and render history ────────────────────────────────────
+  async function fetchHistory() {
+    try {
+      const res   = await fetch('/api/races');
+      const races = await res.json();
+      const tbody = document.getElementById('history-body');
+      tbody.innerHTML = '';
+
+      races.forEach(race => {
+        if (!race.lanes.length) return;
+        race.lanes.forEach((lane, idx) => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${idx === 0 ? race.id : ''}</td>
+            <td>${idx === 0 ? `Heat ${race.heat}` : ''}</td>
+            <td>${idx === 0 ? new Date(race.started_at).toLocaleString('id-ID') : ''}</td>
+            <td>Lintasan ${lane.lane}</td>
+            <td>${fmtMs(lane.elapsed_ms)}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+      });
+    } catch (e) {
+      console.error('fetchHistory error:', e);
+    }
+  }
+
+  // ── Button handlers (mirror hardware) ──────────────────────────
+  document.getElementById('btn-start-a').addEventListener('click', async () => {
+    await fetch('/api/start', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ heat: 1 })
+    });
+    fetchResults();
+  });
+
+  document.getElementById('btn-start-b').addEventListener('click', async () => {
+    await fetch('/api/start', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ heat: 2 })
+    });
+    fetchResults();
+  });
+
+  document.getElementById('btn-reset').addEventListener('click', async () => {
+    if (!confirm('Reset semua lintasan?')) return;
+    await fetch('/api/reset', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+    fetchResults();
+    fetchHistory();
+  });
+
+  // ── Poll loop ────────────────────────────────────────────────────
+  fetchResults();
+  fetchHistory();
+  setInterval(() => { fetchResults(); fetchHistory(); }, POLL_MS);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,18 @@
+{
+  "name": "swimming-timer-backend",
+  "version": "1.0.0",
+  "description": "Swimming timer backend – Node.js + Express + built-in SQLite for 16-lane ESP32 timer",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test tests/api.test.js"
+  },
+  "dependencies": {
+    "express": "^4.18.3"
+  },
+  "devDependencies": {},
+  "engines": {
+    "node": ">=22.5"
+  },
+  "license": "MIT"
+}
