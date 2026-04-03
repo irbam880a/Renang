@@ -1,5 +1,7 @@
 """Settings dialog – ESP32 serial port + lane count."""
 
+from __future__ import annotations
+
 import tkinter as tk
 from tkinter import ttk
 from esp32.serial_comm import list_serial_ports
