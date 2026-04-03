@@ -15,13 +15,20 @@ Protocol (newline-terminated plain text):
 from __future__ import annotations
 
 import threading
-import serial
-import serial.tools.list_ports
 from typing import Callable, Optional
+
+try:
+    import serial
+    import serial.tools.list_ports
+    PYSERIAL_OK = True
+except ImportError:
+    PYSERIAL_OK = False
 
 
 def list_serial_ports() -> list[str]:
     """Return available serial port names."""
+    if not PYSERIAL_OK:
+        return []
     return [p.device for p in serial.tools.list_ports.comports()]
 
 
@@ -40,7 +47,7 @@ class SerialComm:
         """
         self._on_lane_stopped = on_lane_stopped
         self._on_status = on_status
-        self._ser: Optional[serial.Serial] = None
+        self._ser = None  # Optional[serial.Serial]
         self._thread: Optional[threading.Thread] = None
         self._stop_event = threading.Event()
 
@@ -49,6 +56,9 @@ class SerialComm:
         return self._ser is not None and self._ser.is_open
 
     def connect(self, port: str, baud: int = 115200) -> bool:
+        if not PYSERIAL_OK:
+            self._on_status("pyserial not installed. Run: pip install pyserial")
+            return False
         self.disconnect()
         try:
             self._ser = serial.Serial(port, baud, timeout=1)
