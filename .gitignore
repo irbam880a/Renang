@@ -1,3 +1,5 @@
 backend/node_modules/
 backend/swimming_timer.db
 backend/*.db
+backend/*.db-shm
+backend/*.db-wal
