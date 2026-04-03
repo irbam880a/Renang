@@ -3,3 +3,5 @@ backend/swimming_timer.db
 backend/*.db
 backend/*.db-shm
 backend/*.db-wal
+backend/public/__pycache__/
+gui/__pycache__/
