@@ -173,6 +173,143 @@ test('All 16 lanes can record finish times', async () => {
   assert.equal(results.lanes.length, 16);
 });
 
+// ── New metadata & entry endpoint tests ──────────────────────────────────────
+
+test('POST /api/start with metadata stores race fields', async () => {
+  const { status, body } = await request('POST', '/api/start', {
+    heat: 1,
+    acara: '3',
+    seri: '1',
+    nomor: '50',
+    gaya: 'Dada',
+    gender: 'Putra',
+    kategori: '2007-2008',
+    nama_lomba: 'KEJURKAB 2024',
+    tanggal_lomba: '30 November 2024',
+  });
+  assert.equal(status, 200);
+  assert.equal(body.race.acara, '3');
+  assert.equal(body.race.seri, '1');
+  assert.equal(body.race.nomor, '50');
+  assert.equal(body.race.gaya, 'Dada');
+  assert.equal(body.race.gender, 'Putra');
+  assert.equal(body.race.kategori, '2007-2008');
+  assert.equal(body.race.nama_lomba, 'KEJURKAB 2024');
+});
+
+test('GET /api/results includes entries field', async () => {
+  const { body } = await request('GET', '/api/results');
+  assert.ok(body.race);
+  assert.ok(typeof body.entries === 'object');
+});
+
+test('PUT /api/race/:id/meta updates race metadata', async () => {
+  const { body: startBody } = await request('POST', '/api/start', { heat: 1 });
+  const raceId = startBody.race.id;
+
+  const { status, body } = await request('PUT', `/api/race/${raceId}/meta`, {
+    acara: '5',
+    seri: '2',
+    nomor: '100',
+    gaya: 'Bebas',
+    gender: 'Putri',
+    nama_lomba: 'LOMBA TEST',
+    tanggal_lomba: '01 Jan 2025',
+  });
+  assert.equal(status, 200);
+  assert.equal(body.race.acara, '5');
+  assert.equal(body.race.gaya, 'Bebas');
+  assert.equal(body.race.gender, 'Putri');
+});
+
+test('PUT /api/race/:id/meta on missing race returns 404', async () => {
+  const { status } = await request('PUT', '/api/race/999999/meta', { acara: 'X' });
+  assert.equal(status, 404);
+});
+
+test('GET /api/race/:id returns specific race', async () => {
+  const { body: startBody } = await request('POST', '/api/start', { heat: 2 });
+  const raceId = startBody.race.id;
+  await request('POST', '/api/finish', { lane: 4, elapsedMs: 45000 });
+
+  const { status, body } = await request('GET', `/api/race/${raceId}`);
+  assert.equal(status, 200);
+  assert.equal(body.race.id, raceId);
+  assert.equal(body.lanes.length, 1);
+  assert.equal(body.lanes[0].lane, 4);
+});
+
+test('GET /api/race/:id on missing race returns 404', async () => {
+  const { status } = await request('GET', '/api/race/999999');
+  assert.equal(status, 404);
+});
+
+test('POST /api/entry sets athlete for a lane', async () => {
+  await request('POST', '/api/start', { heat: 1 });
+
+  const { status, body } = await request('POST', '/api/entry', {
+    lane: 7,
+    nama_atlet: 'Ahmad Fulan',
+    klub: 'SMPN 1 Genteng',
+    limid_waktu: '00:32.50',
+  });
+  assert.equal(status, 200);
+  assert.equal(body.entry.lane, 7);
+  assert.equal(body.entry.nama_atlet, 'Ahmad Fulan');
+  assert.equal(body.entry.klub, 'SMPN 1 Genteng');
+});
+
+test('POST /api/entry updates existing entry (UPSERT)', async () => {
+  // Second call for same lane should update, not error
+  const { status, body } = await request('POST', '/api/entry', {
+    lane: 7,
+    nama_atlet: 'Ahmad Updated',
+    klub: 'SMAN 2 Banyuwangi',
+  });
+  assert.equal(status, 200);
+  assert.equal(body.entry.nama_atlet, 'Ahmad Updated');
+});
+
+test('POST /api/entry with invalid lane returns 400', async () => {
+  const { status } = await request('POST', '/api/entry', { lane: 0, nama_atlet: 'X' });
+  assert.equal(status, 400);
+});
+
+test('POST /api/entry without active race returns 409', async () => {
+  await request('POST', '/api/reset', {});
+  const { status } = await request('POST', '/api/entry', { lane: 1, nama_atlet: 'X' });
+  assert.equal(status, 409);
+});
+
+test('POST /api/entries batch-sets lane entries', async () => {
+  await request('POST', '/api/start', { heat: 1 });
+
+  const entries = [
+    { lane: 1, nama_atlet: 'Budi', klub: 'SMPN 1', limid_waktu: '00:30.00' },
+    { lane: 2, nama_atlet: 'Citra', klub: 'SMAN 2', limid_waktu: '00:31.00' },
+    { lane: 3, nama_atlet: 'Dewi', klub: 'SMPN 3', limid_waktu: '00:32.00' },
+  ];
+
+  const { status, body } = await request('POST', '/api/entries', { entries });
+  assert.equal(status, 200);
+  assert.equal(body.entries.length, 3);
+
+  // Verify entries are returned in GET /api/results
+  const { body: results } = await request('GET', '/api/results');
+  assert.ok(results.entries[1]);
+  assert.equal(results.entries[1].nama_atlet, 'Budi');
+  assert.equal(results.entries[2].nama_atlet, 'Citra');
+});
+
+test('GET /api/races includes entries per race', async () => {
+  const { body } = await request('GET', '/api/races');
+  assert.ok(Array.isArray(body));
+  // Every race object should have an entries field
+  body.forEach(race => {
+    assert.ok(typeof race.entries === 'object', `race ${race.id} should have entries`);
+  });
+});
+
 // ── Cleanup ───────────────────────────────────────────────────────────────────
 process.on('exit', () => {
   try { fs.unlinkSync(TMP_DB); } catch (_) {}

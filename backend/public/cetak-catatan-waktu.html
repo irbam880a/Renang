@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <title>Form Catatan Waktu</title>
+  <style>
+    @page { size: A5 portrait; margin: 8mm; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: Arial, sans-serif;
+      font-size: 10pt;
+      background: #e8e8e8;
+    }
+
+    @media print {
+      body { background: white; }
+      .no-print { display: none !important; }
+    }
+
+    /* ── Print toolbar ───────────────────────────────────────────── */
+    .no-print {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 20px;
+      background: #1565c0;
+      color: white;
+    }
+    .no-print button {
+      padding: 7px 18px;
+      border: none;
+      border-radius: 6px;
+      font-size: 13px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .no-print .btn-print { background: #fff; color: #1565c0; }
+    .no-print .btn-close  { background: #c62828; color: #fff; }
+    .no-print span { font-size: 13px; }
+
+    /* ── A5 form card ────────────────────────────────────────────── */
+    .form-card {
+      width: 140mm;
+      min-height: 192mm;
+      background: white;
+      border: 1px solid #aaa;
+      padding: 7mm 8mm;
+      margin: 8mm auto;
+      page-break-after: always;
+    }
+    .form-card:last-child { page-break-after: auto; }
+
+    /* header */
+    .hdr { display: flex; align-items: flex-start; gap: 5mm; margin-bottom: 3mm; border-bottom: 1px solid #000; padding-bottom: 2mm; }
+    .hdr-logo { font-size: 22pt; line-height: 1; }
+    .hdr-title { font-size: 9.5pt; font-weight: bold; }
+    .hdr-sub   { font-size: 8pt; color: #444; margin-top: 1px; }
+
+    /* form title & lane box */
+    .form-title  { text-align: center; font-size: 13pt; font-weight: bold; margin: 3mm 0 1mm; letter-spacing: 1px; }
+    .lane-label  { text-align: center; font-size: 8pt; font-weight: bold; letter-spacing: 3px; text-transform: uppercase; }
+    .lane-num    {
+      display: block;
+      width: 24mm; height: 24mm;
+      border: 3px solid black;
+      font-size: 36pt; font-weight: 900;
+      text-align: center; line-height: 24mm;
+      margin: 2mm auto 3mm;
+    }
+
+    /* field rows */
+    .row { display: flex; align-items: center; gap: 3mm; margin: 2mm 0; font-size: 9pt; }
+    .lbl  { font-weight: bold; min-width: 13mm; }
+    .lbl2 { font-weight: bold; min-width: 33mm; }
+    .box  {
+      border: 1px solid black;
+      min-width: 15mm; height: 6.5mm;
+      display: inline-block; padding: 0.5mm 2mm;
+    }
+    .dotline {
+      border-bottom: 1px dotted black;
+      flex: 1; min-height: 5mm;
+      padding-bottom: 1mm;
+    }
+
+    /* nomor / gaya option list */
+    .opts { font-size: 9pt; margin: 2mm 0; line-height: 1.8; }
+    .sel  { text-decoration: underline; font-weight: bold; }
+
+    /* waktu */
+    .waktu-sec { font-size: 9pt; margin: 3mm 0 1mm; }
+    .w-row { display: flex; align-items: baseline; margin: 1.5mm 0 1.5mm 16mm; }
+    .w-num { min-width: 6mm; font-weight: bold; }
+    .w-line {
+      border-bottom: 1px solid black;
+      flex: 1; margin-left: 2mm;
+      min-height: 4mm; padding-bottom: 1mm;
+    }
+
+    /* keterangan & signatures */
+    .ket { font-size: 9pt; margin-top: 3mm; }
+    .sig-row { display: flex; justify-content: space-between; margin-top: 7mm; }
+    .sig-block { text-align: center; font-size: 8.5pt; font-style: italic; }
+    .sig-line  { border-top: 1px solid black; width: 40mm; margin-top: 8mm; }
+  </style>
+</head>
+<body>
+
+<div class="no-print">
+  <button class="btn-print" onclick="window.print()">🖨 Cetak</button>
+  <button class="btn-close"  onclick="window.close()">✕ Tutup</button>
+  <span id="info-text">Memuat data…</span>
+</div>
+
+<div id="forms-container"></div>
+
+<script>
+(() => {
+  'use strict';
+
+  const params = new URLSearchParams(location.search);
+  const raceId = params.get('race_id');
+
+  const NOMORS = ['50', '100', '200', '400', '800', '1.500', '4x50', '4x100', '4x200'];
+  const GAYAS  = ['Bebas', 'Dada', 'Punggung', 'Kupu-kupu', 'Ganti Individu', 'Ganti Estafet', 'Bebas Estafet'];
+
+  function esc(s) {
+    return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function fmtMs(ms) {
+    const m   = Math.floor(ms / 60000);
+    const s   = Math.floor((ms % 60000) / 1000);
+    const ms3 = ms % 1000;
+    return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}.${String(ms3).padStart(3,'0')}`;
+  }
+
+  function optList(list, selected, sep = ' / ') {
+    return list.map(item =>
+      item === selected
+        ? `<span class="sel">${esc(item)}</span>`
+        : esc(item)
+    ).join(sep);
+  }
+
+  async function load() {
+    const url  = raceId ? `/api/race/${raceId}` : '/api/results';
+    const res  = await fetch(url);
+    const data = await res.json();
+
+    if (!data.race) {
+      document.getElementById('forms-container').innerHTML =
+        '<p style="text-align:center;padding:30px;font-size:14px">Tidak ada data lomba.</p>';
+      document.getElementById('info-text').textContent = 'Tidak ada data.';
+      return;
+    }
+
+    const { race, lanes, entries } = data;
+    const timeMap  = {};
+    (lanes || []).forEach(l => { timeMap[l.lane] = l.elapsed_ms; });
+
+    document.getElementById('info-text').textContent =
+      `${race.nama_lomba || 'Lomba'} – Acara ${race.acara || '?'} Seri ${race.seri || '?'} – 16 form`;
+
+    let html = '';
+    for (let lane = 1; lane <= 16; lane++) {
+      const entry   = (entries || {})[lane] || {};
+      const elapsed = timeMap[lane];
+      const waktu1  = elapsed != null ? fmtMs(elapsed) : '';
+
+      html += `
+      <div class="form-card">
+        <div class="hdr">
+          <div class="hdr-logo">🏊</div>
+          <div>
+            <div class="hdr-title">${esc(race.nama_lomba || 'FEDERASI AKUATIK INDONESIA')}</div>
+            <div class="hdr-sub">${esc(race.kategori || '')}</div>
+          </div>
+        </div>
+
+        <div class="form-title">FORM CATATAN WAKTU</div>
+        <div class="lane-label">LINTASAN</div>
+        <div class="lane-num">${lane}</div>
+
+        <div class="row">
+          <span class="lbl">ACARA</span>
+          <span class="box">${esc(race.acara || '')}</span>
+          <span style="margin-left:5mm">SERI</span>
+          <span class="box">${esc(race.seri || '')}</span>
+          <span style="margin-left:5mm;font-weight:bold">${esc(race.gender || 'PA / PI / MIX')}</span>
+        </div>
+
+        <div class="opts">
+          <div><strong>NOMOR</strong> : ${optList(NOMORS, race.nomor)}</div>
+          <div style="margin-top:1mm"><strong>GAYA &nbsp;</strong> : ${optList(GAYAS, race.gaya)}</div>
+        </div>
+
+        <div class="row" style="margin-top:3mm">
+          <span class="lbl2">NAMA ATLET / TIM</span>
+          <span class="dotline">${esc(entry.nama_atlet || '')}</span>
+        </div>
+        <div class="row">
+          <span class="lbl2">KLUB / DAERAH</span>
+          <span class="dotline">${esc(entry.klub || '')}</span>
+        </div>
+
+        <div class="waktu-sec">
+          <strong>WAKTU</strong>
+          <div class="w-row"><span class="w-num">: 1</span><span class="w-line">${waktu1}</span></div>
+          <div class="w-row"><span class="w-num">&nbsp; 2</span><span class="w-line"></span></div>
+          <div class="w-row"><span class="w-num">&nbsp; 3</span><span class="w-line"></span></div>
+        </div>
+
+        <div class="ket">Keterangan &nbsp;: Did Not Start / No Time **</div>
+
+        <div class="sig-row">
+          <div class="sig-block">
+            <div>Chief Timekeeper</div>
+            <div class="sig-line"></div>
+          </div>
+          <div class="sig-block">
+            <div>Timekeeper</div>
+            <div class="sig-line"></div>
+          </div>
+        </div>
+      </div>`;
+    }
+
+    document.getElementById('forms-container').innerHTML = html;
+  }
+
+  load().catch(err => {
+    document.getElementById('forms-container').innerHTML =
+      `<p style="color:red;padding:20px">Error: ${err.message}</p>`;
+  });
+})();
+</script>
+</body>
+</html>

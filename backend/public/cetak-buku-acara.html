@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <title>Buku Acara</title>
+  <style>
+    @page { size: A4 landscape; margin: 10mm; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: Arial, sans-serif;
+      font-size: 9pt;
+      background: #e8e8e8;
+    }
+
+    @media print {
+      body { background: white; }
+      .no-print { display: none !important; }
+    }
+
+    /* ── toolbar ─────────────────────────────────────────────────── */
+    .no-print {
+      position: sticky; top: 0; z-index: 100;
+      display: flex; align-items: center; gap: 12px;
+      padding: 10px 20px;
+      background: #1565c0; color: white;
+    }
+    .no-print button {
+      padding: 7px 18px; border: none; border-radius: 6px;
+      font-size: 13px; cursor: pointer; font-weight: bold;
+    }
+    .btn-print { background: #fff; color: #1565c0; }
+    .btn-close  { background: #c62828; color: #fff; }
+
+    /* ── document header ─────────────────────────────────────────── */
+    .doc-hdr { text-align: center; margin: 6mm 0 8mm; }
+    .doc-hdr h1 { font-size: 14pt; font-weight: bold; letter-spacing: 2px; }
+    .doc-hdr h2 { font-size: 12pt; margin: 2px 0; }
+    .doc-hdr p  { font-size: 10pt; }
+
+    /* ── per-event section ───────────────────────────────────────── */
+    .acara-section {
+      margin-bottom: 10mm;
+      page-break-inside: avoid;
+    }
+
+    .acara-hdr {
+      display: flex;
+      gap: 8mm;
+      align-items: flex-start;
+      margin-bottom: 2mm;
+    }
+
+    .seri-box {
+      border: 1px solid black;
+      padding: 2mm 4mm;
+      text-align: center;
+      font-size: 8pt;
+      font-weight: bold;
+      min-width: 22mm;
+      line-height: 1.4;
+    }
+    .seri-val { font-size: 9.5pt; display: block; margin-top: 1px; }
+
+    .acara-title { font-size: 11pt; font-weight: bold; }
+    .acara-sub   { font-size: 10pt; }
+
+    /* ── results table ───────────────────────────────────────────── */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 8.5pt;
+    }
+    th, td {
+      border: 1px solid #333;
+      padding: 1mm 2mm;
+    }
+    th {
+      background: #ddd;
+      font-weight: bold;
+      text-align: center;
+      white-space: nowrap;
+    }
+    td.c  { text-align: center; }
+    td.lane-col { text-align: center; width: 12mm; }
+    td.seri-col { text-align: center; width: 10mm; vertical-align: middle; }
+    td.time-col { text-align: center; min-width: 22mm; font-family: 'Courier New', monospace; }
+    td.ket-col  { min-width: 18mm; }
+  </style>
+</head>
+<body>
+
+<div class="no-print">
+  <button class="btn-print" onclick="window.print()">🖨 Cetak</button>
+  <button class="btn-close"  onclick="window.close()">✕ Tutup</button>
+  <span id="info-text">Memuat data…</span>
+</div>
+
+<div id="buku-container"></div>
+
+<script>
+(() => {
+  'use strict';
+
+  function esc(s) {
+    return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function fmtMs(ms) {
+    if (ms == null) return '';
+    const m   = Math.floor(ms / 60000);
+    const s   = Math.floor((ms % 60000) / 1000);
+    const ms3 = ms % 1000;
+    return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}.${String(ms3).padStart(3,'0')}`;
+  }
+
+  function genderFull(g) {
+    if (!g) return '';
+    const map = { 'PA': 'PUTRA', 'PI': 'PUTRI', 'MIX': 'MIX',
+                  'Putra': 'PUTRA', 'Putri': 'PUTRI', 'Mix': 'MIX' };
+    return map[g] || g.toUpperCase();
+  }
+
+  async function load() {
+    const res   = await fetch('/api/races');
+    const races = await res.json();
+
+    if (!races.length) {
+      document.getElementById('buku-container').innerHTML =
+        '<p style="text-align:center;padding:30px;font-size:14px">Belum ada data lomba.</p>';
+      document.getElementById('info-text').textContent = 'Belum ada data.';
+      return;
+    }
+
+    const namaLomba = races.find(r => r.nama_lomba)?.nama_lomba || 'BUKU ACARA';
+    const tanggal   = races.find(r => r.tanggal_lomba)?.tanggal_lomba || '';
+
+    document.getElementById('info-text').textContent = namaLomba;
+
+    /* Group races by acara, preserving chronological order */
+    const acaraMap = new Map();
+    [...races].reverse().forEach(race => {
+      const key = race.acara || `Race ${race.id}`;
+      if (!acaraMap.has(key)) acaraMap.set(key, []);
+      acaraMap.get(key).push(race);
+    });
+
+    let html = `
+      <div class="doc-hdr">
+        <h1>BUKU ACARA</h1>
+        <h2>${esc(namaLomba)}</h2>
+        ${tanggal ? `<p>${esc(tanggal)}</p>` : ''}
+      </div>`;
+
+    acaraMap.forEach((acaraRaces, acaraKey) => {
+      const sample  = acaraRaces[0];
+      const nomor   = sample.nomor || '';
+      const gaya    = (sample.gaya || '').toUpperCase();
+      const gender  = genderFull(sample.gender);
+      const eventDesc = [nomor ? `${nomor}M` : '', gaya ? `GAYA ${gaya}` : '', gender]
+                          .filter(Boolean).join(' ');
+      const kategori  = sample.kategori || '';
+
+      /* Build all rows for every heat of this ACARA */
+      let tableRows = '';
+      acaraRaces.forEach(race => {
+        const timeMap  = {};
+        (race.lanes || []).forEach(lt => { timeMap[lt.lane] = lt.elapsed_ms; });
+        const entries  = race.entries || {};
+        const seriLabel = esc(String(race.seri || race.heat || ''));
+
+        for (let lane = 1; lane <= 16; lane++) {
+          const entry   = entries[lane] || {};
+          const elapsed = timeMap[lane];
+          const isFirst = (lane === 1);
+
+          tableRows += `
+            <tr>
+              ${isFirst
+                ? `<td class="seri-col" rowspan="16">${seriLabel}</td>`
+                : ''}
+              <td class="lane-col">${lane}</td>
+              <td>${esc(entry.nama_atlet || '')}</td>
+              <td>${esc(entry.klub || '')}</td>
+              <td class="time-col">${esc(entry.limid_waktu || '')}</td>
+              <td class="time-col">${fmtMs(elapsed)}</td>
+              <td class="ket-col"></td>
+            </tr>`;
+        }
+      });
+
+      html += `
+        <div class="acara-section">
+          <div class="acara-hdr">
+            <div class="seri-box">
+              SERI<span class="seri-val">${esc(kategori)}</span>
+            </div>
+            <div>
+              <div class="acara-title">ACARA ${esc(String(acaraKey))}</div>
+              <div class="acara-sub">: ${esc(eventDesc)}</div>
+            </div>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>SERI</th>
+                <th>LINTASAN</th>
+                <th>NAMA ATLET</th>
+                <th>SEKOLAH / KLUB</th>
+                <th>LIMID WAKTU</th>
+                <th>WAKTU</th>
+                <th>KETERANGAN</th>
+              </tr>
+            </thead>
+            <tbody>${tableRows}</tbody>
+          </table>
+        </div>`;
+    });
+
+    document.getElementById('buku-container').innerHTML = html;
+  }
+
+  load().catch(err => {
+    document.getElementById('buku-container').innerHTML =
+      `<p style="color:red;padding:20px">Error: ${err.message}</p>`;
+  });
+})();
+</script>
+</body>
+</html>

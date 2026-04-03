@@ -27,157 +27,160 @@
       padding: 16px;
     }
 
-    header {
-      text-align: center;
-      padding: 20px 0 12px;
-    }
-    header h1 {
-      font-size: 2rem;
-      color: var(--cyan);
-      letter-spacing: 2px;
-    }
-    header p {
-      color: var(--muted);
-      font-size: 0.95rem;
-      margin-top: 4px;
-    }
+    header { text-align: center; padding: 20px 0 12px; }
+    header h1 { font-size: 2rem; color: var(--cyan); letter-spacing: 2px; }
+    header p  { color: var(--muted); font-size: 0.95rem; margin-top: 4px; }
 
-    /* ── Status bar ─────────────────────────────────────────────── */
+    /* ── Status bar ────────────────────────────────────────────────── */
     #status-bar {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 24px;
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 10px 20px;
-      margin: 16px auto;
-      max-width: 700px;
-      flex-wrap: wrap;
+      display: flex; align-items: center; justify-content: center; gap: 24px;
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 10px; padding: 10px 20px;
+      margin: 16px auto; max-width: 800px; flex-wrap: wrap;
     }
     #status-bar .label { color: var(--muted); font-size: 0.82rem; text-transform: uppercase; letter-spacing: 1px; }
     #status-bar .value { font-size: 1.1rem; font-weight: 700; }
     #race-status   { color: #ffd54f; }
     #race-heat     { color: var(--cyan); }
     #race-elapsed  { color: #80cbc4; font-variant-numeric: tabular-nums; }
+    #race-info     { color: var(--muted); font-size: 0.95rem; }
 
-    /* ── Control buttons ────────────────────────────────────────── */
+    /* ── Control buttons ───────────────────────────────────────────── */
     #controls {
-      display: flex;
-      gap: 12px;
-      justify-content: center;
-      margin: 12px 0 20px;
-      flex-wrap: wrap;
+      display: flex; gap: 10px;
+      justify-content: center; margin: 10px 0 8px; flex-wrap: wrap;
     }
     button {
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 0.95rem;
-      font-weight: 700;
-      letter-spacing: 1px;
-      padding: 10px 24px;
+      border: none; border-radius: 8px; cursor: pointer;
+      font-size: 0.9rem; font-weight: 700; letter-spacing: 1px;
+      padding: 9px 20px;
       transition: opacity 0.15s, transform 0.1s;
     }
     button:active { transform: scale(0.96); }
     button:disabled { opacity: 0.4; cursor: not-allowed; }
 
-    #btn-start-a { background: var(--green); color: #fff; }
-    #btn-start-b { background: var(--blue);  color: #fff; }
-    #btn-reset   { background: var(--red);   color: #fff; }
+    .btn-green { background: var(--green); color: #fff; }
+    .btn-blue  { background: var(--blue);  color: #fff; }
+    .btn-red   { background: var(--red);   color: #fff; }
+    .btn-teal  { background: #00695c;      color: #fff; }
+    .btn-gray  { background: #37474f;      color: #e0e0e0; }
 
-    /* ── Lane grid ──────────────────────────────────────────────── */
+    /* ── Setup panel (collapsible) ─────────────────────────────────── */
+    #setup-panel {
+      max-width: 900px; margin: 0 auto 12px;
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 10px; overflow: hidden;
+    }
+    #setup-toggle {
+      width: 100%; text-align: left; padding: 10px 16px;
+      background: var(--border); color: var(--text);
+      font-size: 0.9rem; font-weight: 700;
+      border: none; cursor: pointer; display: flex; align-items: center; gap: 8px;
+    }
+    #setup-body { padding: 14px 16px; display: none; }
+    #setup-body.open { display: block; }
+
+    .setup-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+      gap: 10px 16px;
+      margin-bottom: 12px;
+    }
+    .field-group { display: flex; flex-direction: column; gap: 4px; }
+    .field-group label { color: var(--muted); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.5px; }
+    .field-group input,
+    .field-group select {
+      background: #0d1b2a; color: var(--text);
+      border: 1px solid var(--border); border-radius: 5px;
+      padding: 5px 8px; font-size: 0.88rem;
+    }
+    .field-group input:focus,
+    .field-group select:focus { outline: 2px solid var(--cyan); }
+
+    /* ── Athlete entry table ───────────────────────────────────────── */
+    #athlete-section {
+      max-width: 900px; margin: 0 auto 12px;
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 10px; overflow: hidden;
+    }
+    #athlete-toggle {
+      width: 100%; text-align: left; padding: 10px 16px;
+      background: #0a2e38; color: var(--text);
+      font-size: 0.9rem; font-weight: 700;
+      border: none; cursor: pointer; display: flex; align-items: center; gap: 8px;
+    }
+    #athlete-body { padding: 10px 14px; display: none; }
+    #athlete-body.open { display: block; }
+
+    #athlete-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+    #athlete-table th {
+      background: var(--border); color: var(--muted);
+      padding: 6px 8px; text-align: left;
+      text-transform: uppercase; letter-spacing: 0.5px; font-size: 0.77rem;
+    }
+    #athlete-table td { padding: 3px 4px; border-bottom: 1px solid var(--border); }
+    #athlete-table td:first-child { color: var(--muted); text-align: center; width: 40px; }
+    #athlete-table input {
+      width: 100%; background: #0d1b2a; color: var(--text);
+      border: 1px solid var(--border); border-radius: 4px;
+      padding: 3px 6px; font-size: 0.82rem;
+    }
+    #athlete-table input:focus { outline: 1px solid var(--cyan); }
+
+    /* ── Print buttons ─────────────────────────────────────────────── */
+    #print-bar {
+      display: flex; gap: 10px; justify-content: center; margin: 4px 0 16px; flex-wrap: wrap;
+    }
+
+    /* ── Lane grid ─────────────────────────────────────────────────── */
     #lane-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-      gap: 12px;
-      max-width: 1100px;
-      margin: 0 auto;
+      grid-template-columns: repeat(auto-fill, minmax(175px, 1fr));
+      gap: 12px; max-width: 1100px; margin: 0 auto;
     }
 
     .lane-card {
-      background: var(--card);
-      border: 2px solid var(--border);
-      border-radius: 12px;
-      padding: 14px 16px;
+      background: var(--card); border: 2px solid var(--border);
+      border-radius: 12px; padding: 12px 14px;
       transition: border-color 0.3s, box-shadow 0.3s;
       position: relative;
-      overflow: hidden;
     }
-    .lane-card.finished {
-      border-color: var(--cyan);
-      box-shadow: 0 0 12px rgba(0, 172, 193, 0.35);
-    }
-    .lane-card.rank-1 { border-color: gold;   box-shadow: 0 0 14px rgba(255,215,0,0.45); }
-    .lane-card.rank-2 { border-color: silver; box-shadow: 0 0 12px rgba(192,192,192,0.35); }
-    .lane-card.rank-3 { border-color: #cd7f32; }
+    .lane-card.finished         { border-color: var(--cyan); box-shadow: 0 0 12px rgba(0,172,193,.35); }
+    .lane-card.rank-1           { border-color: gold;   box-shadow: 0 0 14px rgba(255,215,0,.45); }
+    .lane-card.rank-2           { border-color: silver; box-shadow: 0 0 12px rgba(192,192,192,.35); }
+    .lane-card.rank-3           { border-color: #cd7f32; }
 
-    .lane-number {
-      font-size: 0.78rem;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 1px;
-    }
-    .lane-name {
-      font-size: 1.05rem;
-      font-weight: 700;
-      margin: 2px 0 8px;
-    }
-    .lane-time {
-      font-size: 1.7rem;
-      font-weight: 900;
-      font-variant-numeric: tabular-nums;
-      letter-spacing: 1px;
-      color: var(--cyan);
+    .lane-number   { font-size: 0.76rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+    .lane-athlete  { font-size: 0.85rem; font-weight: 700; margin: 1px 0; min-height: 18px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .lane-club     { font-size: 0.72rem; color: var(--muted); min-height: 14px; }
+    .lane-time     {
+      font-size: 1.55rem; font-weight: 900;
+      font-variant-numeric: tabular-nums; letter-spacing: 1px;
+      color: var(--cyan); margin-top: 4px;
     }
     .lane-card.finished .lane-time { color: #fff; }
     .lane-card.rank-1 .lane-time   { color: gold; }
     .lane-card.rank-2 .lane-time   { color: silver; }
 
     .rank-badge {
-      position: absolute;
-      top: 10px;
-      right: 12px;
-      font-size: 1.4rem;
+      position: absolute; top: 10px; right: 10px; font-size: 1.3rem;
     }
 
-    /* ── History table ──────────────────────────────────────────── */
-    #history-section {
-      max-width: 900px;
-      margin: 32px auto 0;
-    }
-    #history-section h2 {
-      color: var(--cyan);
-      font-size: 1.2rem;
-      margin-bottom: 10px;
-      letter-spacing: 1px;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.88rem;
-    }
+    /* ── History table ─────────────────────────────────────────────── */
+    #history-section { max-width: 1000px; margin: 32px auto 0; }
+    #history-section h2 { color: var(--cyan); font-size: 1.1rem; margin-bottom: 10px; letter-spacing: 1px; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
     th {
-      background: var(--border);
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      padding: 8px 12px;
-      text-align: left;
+      background: var(--border); color: var(--muted);
+      text-transform: uppercase; letter-spacing: 1px;
+      padding: 8px 10px; text-align: left;
     }
-    td {
-      padding: 7px 12px;
-      border-bottom: 1px solid var(--border);
-    }
-    tr:hover td { background: rgba(255,255,255,0.04); }
+    td { padding: 6px 10px; border-bottom: 1px solid var(--border); }
+    tr:hover td { background: rgba(255,255,255,.04); }
 
     footer {
-      text-align: center;
-      color: var(--muted);
-      font-size: 0.78rem;
-      margin-top: 40px;
-      padding-bottom: 16px;
+      text-align: center; color: var(--muted);
+      font-size: 0.78rem; margin-top: 40px; padding-bottom: 16px;
     }
   </style>
 </head>
@@ -202,13 +205,98 @@
     <div class="label">Waktu Berjalan</div>
     <div class="value" id="race-elapsed">00:00.000</div>
   </div>
+  <div>
+    <div class="label">Acara / Seri</div>
+    <div class="value" id="race-info">—</div>
+  </div>
 </div>
 
-<!-- Manual controls (mirrors hardware buttons – useful for testing) -->
+<!-- Control buttons -->
 <div id="controls">
-  <button id="btn-start-a">▶ START A</button>
-  <button id="btn-start-b">▶ START B</button>
-  <button id="btn-reset">↺ RESET SEMUA</button>
+  <button id="btn-start-a" class="btn-green">▶ START A</button>
+  <button id="btn-start-b" class="btn-blue">▶ START B</button>
+  <button id="btn-reset"   class="btn-red">↺ RESET SEMUA</button>
+  <button id="btn-save-setup" class="btn-teal">💾 Simpan Setup</button>
+</div>
+
+<!-- Setup panel -->
+<div id="setup-panel">
+  <button id="setup-toggle">⚙ Setup Lomba &amp; Atlet <span id="setup-arrow">▸</span></button>
+  <div id="setup-body">
+
+    <!-- Race metadata -->
+    <div class="setup-grid">
+      <div class="field-group" style="grid-column:span 2">
+        <label>Nama Lomba</label>
+        <input id="f-nama-lomba" type="text" placeholder="cth: KEJURKAB TAHUN 2024" />
+      </div>
+      <div class="field-group">
+        <label>Tanggal</label>
+        <input id="f-tanggal" type="text" placeholder="cth: 30 November 2024" />
+      </div>
+      <div class="field-group">
+        <label>Kategori / Seri</label>
+        <input id="f-kategori" type="text" placeholder="cth: 2007-2008" />
+      </div>
+      <div class="field-group">
+        <label>Acara #</label>
+        <input id="f-acara" type="text" placeholder="cth: 1" />
+      </div>
+      <div class="field-group">
+        <label>Seri (Heat)</label>
+        <input id="f-seri" type="text" placeholder="cth: 1" />
+      </div>
+      <div class="field-group">
+        <label>Nomor (Jarak)</label>
+        <select id="f-nomor">
+          <option>50</option><option>100</option><option>200</option>
+          <option>400</option><option>800</option><option>1500</option>
+          <option>4x50</option><option>4x100</option><option>4x200</option>
+        </select>
+      </div>
+      <div class="field-group">
+        <label>Gaya</label>
+        <select id="f-gaya">
+          <option>Bebas</option><option>Dada</option><option>Punggung</option>
+          <option>Kupu-kupu</option><option>Ganti Individu</option>
+          <option>Ganti Estafet</option><option>Bebas Estafet</option>
+        </select>
+      </div>
+      <div class="field-group">
+        <label>Gender</label>
+        <select id="f-gender">
+          <option value="Putra">Putra (PA)</option>
+          <option value="Putri">Putri (PI)</option>
+          <option value="Mix">Mix</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Athlete entries -->
+    <div id="athlete-section" style="margin:0">
+      <button id="athlete-toggle">👤 Daftar Atlet (klik untuk isi nama per lintasan) <span id="athlete-arrow">▸</span></button>
+      <div id="athlete-body">
+        <table id="athlete-table">
+          <thead>
+            <tr>
+              <th>Lin.</th>
+              <th>Nama Atlet / Tim</th>
+              <th>Sekolah / Klub / Daerah</th>
+              <th>Limid Waktu</th>
+            </tr>
+          </thead>
+          <tbody id="athlete-rows"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div><!-- /setup-body -->
+</div><!-- /setup-panel -->
+
+<!-- Print buttons -->
+<div id="print-bar">
+  <button class="btn-teal" onclick="openPrintCatatanWaktu()">🖨 Cetak Form Catatan Waktu</button>
+  <button class="btn-gray"  onclick="openBukuAcara()">📚 Cetak Buku Acara</button>
 </div>
 
 <!-- 16-lane cards -->
@@ -220,7 +308,8 @@
   <table id="history-table">
     <thead>
       <tr>
-        <th>#</th><th>Heat</th><th>Waktu Mulai</th><th>Lintasan</th><th>Waktu (mm:ss.ms)</th>
+        <th>#</th><th>Acara</th><th>Seri</th><th>Nomor/Gaya</th><th>Heat</th>
+        <th>Waktu Mulai</th><th>Lintasan</th><th>Waktu (mm:ss.ms)</th>
       </tr>
     </thead>
     <tbody id="history-body"></tbody>
@@ -234,9 +323,9 @@
   'use strict';
 
   const NUM_LANES = 16;
-  const POLL_MS   = 1000;   // refresh interval
+  const POLL_MS   = 1000;
 
-  // ── Build lane cards ────────────────────────────────────────────
+  // ── Build lane cards ──────────────────────────────────────────────
   const grid = document.getElementById('lane-grid');
   for (let i = 1; i <= NUM_LANES; i++) {
     const card = document.createElement('div');
@@ -244,18 +333,46 @@
     card.id = `lane-${i}`;
     card.innerHTML = `
       <div class="lane-number">Lintasan ${i}</div>
-      <div class="lane-name"></div>
+      <div class="lane-athlete"></div>
+      <div class="lane-club"></div>
       <div class="lane-time">—</div>
       <div class="rank-badge"></div>
     `;
     grid.appendChild(card);
   }
 
-  // ── Helpers ─────────────────────────────────────────────────────
+  // ── Build athlete entry rows ─────────────────────────────────────
+  const tbody = document.getElementById('athlete-rows');
+  for (let i = 1; i <= NUM_LANES; i++) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${i}</td>
+      <td><input type="text" id="ae-nama-${i}" placeholder="Nama Atlet/Tim" /></td>
+      <td><input type="text" id="ae-klub-${i}" placeholder="Sekolah / Klub" /></td>
+      <td><input type="text" id="ae-limid-${i}" placeholder="00:32.50" style="width:90px" /></td>
+    `;
+    tbody.appendChild(tr);
+  }
+
+  // ── Toggle setup & athlete panels ────────────────────────────────
+  document.getElementById('setup-toggle').addEventListener('click', () => {
+    const body  = document.getElementById('setup-body');
+    const arrow = document.getElementById('setup-arrow');
+    body.classList.toggle('open');
+    arrow.textContent = body.classList.contains('open') ? '▾' : '▸';
+  });
+  document.getElementById('athlete-toggle').addEventListener('click', () => {
+    const body  = document.getElementById('athlete-body');
+    const arrow = document.getElementById('athlete-arrow');
+    body.classList.toggle('open');
+    arrow.textContent = body.classList.contains('open') ? '▾' : '▸';
+  });
+
+  // ── Helpers ───────────────────────────────────────────────────────
   function fmtMs(ms) {
     if (ms == null) return '—';
-    const m  = Math.floor(ms / 60000);
-    const s  = Math.floor((ms % 60000) / 1000);
+    const m   = Math.floor(ms / 60000);
+    const s   = Math.floor((ms % 60000) / 1000);
     const ms3 = ms % 1000;
     return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}.${String(ms3).padStart(3,'0')}`;
   }
@@ -264,14 +381,58 @@
     return rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : '';
   }
 
-  // ── Elapsed timer (client-side) ─────────────────────────────────
-  let clientStartAt  = null;   // Date.now() when start was received
-  let serverStartedAt = null;  // server-side startedAt for the active race
-  let elapsedTimer   = null;
+  function getMeta() {
+    return {
+      acara:         document.getElementById('f-acara').value.trim()      || undefined,
+      seri:          document.getElementById('f-seri').value.trim()       || undefined,
+      nomor:         document.getElementById('f-nomor').value             || undefined,
+      gaya:          document.getElementById('f-gaya').value              || undefined,
+      gender:        document.getElementById('f-gender').value            || undefined,
+      kategori:      document.getElementById('f-kategori').value.trim()   || undefined,
+      nama_lomba:    document.getElementById('f-nama-lomba').value.trim() || undefined,
+      tanggal_lomba: document.getElementById('f-tanggal').value.trim()    || undefined,
+    };
+  }
+
+  function fillSetupForm(race) {
+    if (!race) return;
+    const ids = ['acara','seri','nomor','gaya','gender','kategori','nama_lomba','tanggal_lomba'];
+    const inputs = {
+      'acara':         'f-acara',
+      'seri':          'f-seri',
+      'nomor':         'f-nomor',
+      'gaya':          'f-gaya',
+      'gender':        'f-gender',
+      'kategori':      'f-kategori',
+      'nama_lomba':    'f-nama-lomba',
+      'tanggal_lomba': 'f-tanggal',
+    };
+    for (const [key, id] of Object.entries(inputs)) {
+      const el = document.getElementById(id);
+      if (el && race[key]) el.value = race[key];
+    }
+  }
+
+  function fillAthleteRows(entries) {
+    if (!entries) return;
+    for (let lane = 1; lane <= NUM_LANES; lane++) {
+      const e = entries[lane] || {};
+      const setVal = (id, val) => {
+        const el = document.getElementById(id);
+        if (el) el.value = val || '';
+      };
+      setVal(`ae-nama-${lane}`,  e.nama_atlet);
+      setVal(`ae-klub-${lane}`,  e.klub);
+      setVal(`ae-limid-${lane}`, e.limid_waktu);
+    }
+  }
+
+  // ── Elapsed timer (client-side) ──────────────────────────────────
+  let serverStartedAt = null;
+  let elapsedTimer    = null;
 
   function startElapsedTimer(startedAt) {
     serverStartedAt = startedAt;
-    clientStartAt   = Date.now() - (Date.now() - startedAt);
     if (elapsedTimer) clearInterval(elapsedTimer);
     elapsedTimer = setInterval(() => {
       const elapsed = Date.now() - serverStartedAt;
@@ -285,19 +446,21 @@
     document.getElementById('race-elapsed').textContent = '00:00.000';
   }
 
-  // ── Update UI from server data ──────────────────────────────────
+  // ── Update UI from server data ───────────────────────────────────
   function updateUI(data) {
-    const { race, lanes } = data;
+    const { race, lanes, entries } = data;
 
     if (!race) {
       document.getElementById('race-status').textContent = 'Menunggu Start';
       document.getElementById('race-heat').textContent = '—';
+      document.getElementById('race-info').textContent = '—';
       stopElapsedTimer();
-      // Clear all cards
       for (let i = 1; i <= NUM_LANES; i++) {
         const card = document.getElementById(`lane-${i}`);
         card.className = 'lane-card';
         card.querySelector('.lane-time').textContent = '—';
+        card.querySelector('.lane-athlete').textContent = '';
+        card.querySelector('.lane-club').textContent = '';
         card.querySelector('.rank-badge').textContent = '';
       }
       return;
@@ -306,47 +469,52 @@
     document.getElementById('race-status').textContent =
       race.active ? 'Berlomba 🏊' : 'Selesai / Reset';
     document.getElementById('race-heat').textContent = `Heat ${race.heat}`;
+    const acInfo = [race.acara ? `Acara ${race.acara}` : '', race.seri ? `Seri ${race.seri}` : ''].filter(Boolean).join(' • ');
+    document.getElementById('race-info').textContent = acInfo || (race.nomor ? `${race.nomor}m ${race.gaya || ''}` : '—');
 
-    if (race.active) {
-      startElapsedTimer(race.started_at);
-    } else {
-      stopElapsedTimer();
-    }
+    if (race.active) startElapsedTimer(race.started_at);
+    else             stopElapsedTimer();
+
+    // Auto-fill setup form when race has metadata
+    fillSetupForm(race);
+    fillAthleteRows(entries);
 
     // Map lane → rank
     const laneMap = {};
-    lanes.forEach((row, idx) => {
+    (lanes || []).forEach((row, idx) => {
       laneMap[row.lane] = { elapsed_ms: row.elapsed_ms, rank: idx + 1 };
     });
 
     for (let i = 1; i <= NUM_LANES; i++) {
-      const card = document.getElementById(`lane-${i}`);
-      const info = laneMap[i];
+      const card  = document.getElementById(`lane-${i}`);
+      const info  = laneMap[i];
+      const entry = (entries || {})[i] || {};
+
+      card.querySelector('.lane-athlete').textContent = entry.nama_atlet || '';
+      card.querySelector('.lane-club').textContent    = entry.klub || '';
+
       if (info) {
-        card.querySelector('.lane-time').textContent = fmtMs(info.elapsed_ms);
+        card.querySelector('.lane-time').textContent  = fmtMs(info.elapsed_ms);
         card.querySelector('.rank-badge').textContent = rankEmoji(info.rank);
-        card.className = 'lane-card finished' +
-          (info.rank <= 3 ? ` rank-${info.rank}` : '');
+        card.className = 'lane-card finished' + (info.rank <= 3 ? ` rank-${info.rank}` : '');
       } else {
-        card.querySelector('.lane-time').textContent = race.active ? '—' : '—';
+        card.querySelector('.lane-time').textContent  = '—';
         card.querySelector('.rank-badge').textContent = '';
         card.className = 'lane-card';
       }
     }
   }
 
-  // ── Fetch and render current results ───────────────────────────
+  // ── Fetch current results ────────────────────────────────────────
   async function fetchResults() {
     try {
       const res  = await fetch('/api/results');
       const data = await res.json();
       updateUI(data);
-    } catch (e) {
-      console.error('fetchResults error:', e);
-    }
+    } catch (e) { console.error('fetchResults error:', e); }
   }
 
-  // ── Fetch and render history ────────────────────────────────────
+  // ── Fetch and render history ─────────────────────────────────────
   async function fetchHistory() {
     try {
       const res   = await fetch('/api/races');
@@ -358,27 +526,79 @@
         if (!race.lanes.length) return;
         race.lanes.forEach((lane, idx) => {
           const tr = document.createElement('tr');
+          const entry = (race.entries || {})[lane.lane] || {};
           tr.innerHTML = `
             <td>${idx === 0 ? race.id : ''}</td>
+            <td>${idx === 0 ? (race.acara || '—') : ''}</td>
+            <td>${idx === 0 ? (race.seri || '—') : ''}</td>
+            <td>${idx === 0 ? [(race.nomor||''), (race.gaya||'')].filter(Boolean).join('m ') || '—' : ''}</td>
             <td>${idx === 0 ? `Heat ${race.heat}` : ''}</td>
             <td>${idx === 0 ? new Date(race.started_at).toLocaleString('id-ID') : ''}</td>
-            <td>Lintasan ${lane.lane}</td>
+            <td>Lintasan ${lane.lane}${entry.nama_atlet ? ' – ' + entry.nama_atlet : ''}</td>
             <td>${fmtMs(lane.elapsed_ms)}</td>
           `;
           tbody.appendChild(tr);
         });
       });
-    } catch (e) {
-      console.error('fetchHistory error:', e);
-    }
+    } catch (e) { console.error('fetchHistory error:', e); }
   }
 
-  // ── Button handlers (mirror hardware) ──────────────────────────
+  // ── Save setup (updates active race metadata + athlete entries) ──
+  async function saveSetup() {
+    const resultsRes = await fetch('/api/results');
+    const resultsData = await resultsRes.json();
+    if (!resultsData.race) {
+      alert('Tidak ada lomba aktif. Tekan START terlebih dahulu.');
+      return;
+    }
+    const raceId = resultsData.race.id;
+
+    // Update metadata
+    await fetch(`/api/race/${raceId}/meta`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(getMeta()),
+    });
+
+    // Batch update athlete entries
+    const entries = [];
+    for (let lane = 1; lane <= NUM_LANES; lane++) {
+      entries.push({
+        lane,
+        nama_atlet:  document.getElementById(`ae-nama-${lane}`).value.trim()  || null,
+        klub:        document.getElementById(`ae-klub-${lane}`).value.trim()   || null,
+        limid_waktu: document.getElementById(`ae-limid-${lane}`).value.trim()  || null,
+      });
+    }
+    await fetch('/api/entries', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ race_id: raceId, entries }),
+    });
+
+    fetchResults();
+    fetchHistory();
+  }
+
+  // ── Print helpers ─────────────────────────────────────────────────
+  window.openPrintCatatanWaktu = async () => {
+    const res  = await fetch('/api/results');
+    const data = await res.json();
+    const id   = data.race?.id;
+    const url  = id ? `/cetak-catatan-waktu.html?race_id=${id}` : '/cetak-catatan-waktu.html';
+    window.open(url, '_blank');
+  };
+
+  window.openBukuAcara = () => {
+    window.open('/cetak-buku-acara.html', '_blank');
+  };
+
+  // ── Button handlers ───────────────────────────────────────────────
   document.getElementById('btn-start-a').addEventListener('click', async () => {
     await fetch('/api/start', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ heat: 1 })
+      body: JSON.stringify({ heat: 1, ...getMeta() }),
     });
     fetchResults();
   });
@@ -387,7 +607,7 @@
     await fetch('/api/start', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ heat: 2 })
+      body: JSON.stringify({ heat: 2, ...getMeta() }),
     });
     fetchResults();
   });
@@ -399,7 +619,9 @@
     fetchHistory();
   });
 
-  // ── Poll loop ────────────────────────────────────────────────────
+  document.getElementById('btn-save-setup').addEventListener('click', saveSetup);
+
+  // ── Poll loop ─────────────────────────────────────────────────────
   fetchResults();
   fetchHistory();
   setInterval(() => { fetchResults(); fetchHistory(); }, POLL_MS);
