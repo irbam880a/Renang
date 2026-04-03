@@ -148,7 +148,7 @@ class UserGuideTab(ttk.Frame):
         canvas.pack(side="left", fill="both", expand=True)
         scrollbar.pack(side="right", fill="y")
 
-        # Enable mouse-wheel scrolling
+        # Enable mouse-wheel scrolling (scoped to this canvas only)
         def _on_mousewheel(event):
             canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
 
@@ -158,9 +158,13 @@ class UserGuideTab(ttk.Frame):
         def _on_linux_scroll_down(event):
             canvas.yview_scroll(3, "units")
 
-        canvas.bind_all("<MouseWheel>", _on_mousewheel)
-        canvas.bind_all("<Button-4>", _on_linux_scroll_up)
-        canvas.bind_all("<Button-5>", _on_linux_scroll_down)
+        canvas.bind("<MouseWheel>", _on_mousewheel)
+        canvas.bind("<Button-4>", _on_linux_scroll_up)
+        canvas.bind("<Button-5>", _on_linux_scroll_down)
+        # Also bind on inner frame so scrolling works when hovering over content
+        self._inner.bind("<MouseWheel>", _on_mousewheel)
+        self._inner.bind("<Button-4>", _on_linux_scroll_up)
+        self._inner.bind("<Button-5>", _on_linux_scroll_down)
 
         # ── Header ───────────────────────────────────────────────────────
         hdr = tk.Frame(self._inner, bg=theme.PRIMARY, height=56)

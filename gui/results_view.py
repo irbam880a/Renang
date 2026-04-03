@@ -131,10 +131,13 @@ class ResultsView(ttk.Frame):
             )
             return
 
-        # Build a temporary PDF
-        tmp_dir = tempfile.mkdtemp(prefix="renang_print_")
-        pdf_path = os.path.join(tmp_dir, "hasil_lomba.pdf")
+        # Build a temporary PDF (use NamedTemporaryFile so OS temp cleanup applies)
         try:
+            tmp = tempfile.NamedTemporaryFile(
+                suffix=".pdf", prefix="renang_hasil_", delete=False
+            )
+            pdf_path = tmp.name
+            tmp.close()
             export_competition_pdf(self._comp_id, pdf_path)
         except Exception as exc:
             messagebox.showerror("Error", f"Gagal membuat PDF:\n{exc}",
