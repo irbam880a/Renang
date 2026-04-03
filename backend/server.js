@@ -1,9 +1,9 @@
 'use strict';
-const express = require('express');
-const path    = require('path');
-const multer  = require('multer');
-const XLSX    = require('xlsx');
-const db      = require('./database');
+const express  = require('express');
+const path     = require('path');
+const multer   = require('multer');
+const ExcelJS  = require('exceljs');
+const db       = require('./database');
 
 const app    = express();
 const upload = multer({ storage: multer.memoryStorage() });
@@ -166,25 +166,50 @@ app.post('/api/heats/:heatId/entries', (req, res) => {
 });
 
 // POST /api/heats/:heatId/entries/import  – bulk from Excel
-app.post('/api/heats/:heatId/entries/import', upload.single('file'), (req, res) => {
+app.post('/api/heats/:heatId/entries/import', upload.single('file'), async (req, res) => {
   const heat = db.getHeat(req.params.heatId);
   if (!heat) return fail(res, 'Heat tidak ditemukan', 404);
   if (!req.file) return fail(res, 'File diperlukan');
 
   try {
-    const wb   = XLSX.read(req.file.buffer, { type: 'buffer' });
-    const ws   = wb.Sheets[wb.SheetNames[0]];
-    const rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
+    const wb = new ExcelJS.Workbook();
+    await wb.xlsx.load(req.file.buffer);
+    const ws = wb.worksheets[0];
+    if (!ws) return fail(res, 'Sheet tidak ditemukan dalam file');
 
-    const entries = rows
-      .filter(r => intParam(r['Lane'] || r['lane'], 1, 16))
-      .map(r => ({
-        lane:    intParam(r['Lane'] || r['lane'], 1, 16),
-        name:    String(r['Name'] || r['name'] || r['Nama'] || '').trim(),
-        club:    String(r['Club'] || r['club'] || r['Klub'] || '').trim(),
-        country: String(r['Country'] || r['country'] || r['Negara'] || '').trim(),
-        seed:    String(r['Seed'] || r['seed'] || r['Seed Time'] || '').trim(),
-      }));
+    // Detect header row (first row)
+    const headerRow = ws.getRow(1).values; // 1-based index, index 0 is undefined
+    const headers = {};
+    headerRow.forEach((h, i) => {
+      if (h) headers[String(h).toLowerCase().trim()] = i;
+    });
+
+    const colIdx = (names) => {
+      for (const n of names) if (headers[n] !== undefined) return headers[n];
+      return null;
+    };
+
+    const laneCol    = colIdx(['lane']);
+    const nameCol    = colIdx(['name', 'nama']);
+    const clubCol    = colIdx(['club', 'klub']);
+    const countryCol = colIdx(['country', 'negara']);
+    const seedCol    = colIdx(['seed', 'seed time']);
+
+    if (laneCol === null) return fail(res, 'Kolom "Lane" tidak ditemukan dalam file');
+
+    const entries = [];
+    ws.eachRow((row, rowNum) => {
+      if (rowNum === 1) return; // skip header
+      const lane = intParam(row.getCell(laneCol).value, 1, 16);
+      if (!lane) return;
+      entries.push({
+        lane,
+        name:    String(nameCol    !== null ? (row.getCell(nameCol).value    || '') : '').trim(),
+        club:    String(clubCol    !== null ? (row.getCell(clubCol).value    || '') : '').trim(),
+        country: String(countryCol !== null ? (row.getCell(countryCol).value || '') : '').trim(),
+        seed:    String(seedCol    !== null ? (row.getCell(seedCol).value    || '') : '').trim(),
+      });
+    });
 
     db.bulkImportEntries(heat.id, entries);
     ok(res, db.listEntries(heat.id));
@@ -208,36 +233,32 @@ app.delete('/api/entries/:id', (req, res) => {
 
 // ─── Excel template download ──────────────────────────────────────────────────
 
-app.get('/api/template-entries', (req, res) => {
+app.get('/api/template-entries', async (req, res) => {
   const jumlah = intParam(req.query.jumlah, 1, 16) || 8;
-  const ws = XLSX.utils.aoa_to_sheet([
-    ['Lane', 'Name', 'Club', 'Country', 'Seed'],
-    ...Array.from({ length: jumlah }, (_, i) => [i + 1, '', '', '', '']),
-  ]);
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, 'Entries');
-  const buf = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+  const wb = new ExcelJS.Workbook();
+  const ws = wb.addWorksheet('Entries');
+  ws.addRow(['Lane', 'Name', 'Club', 'Country', 'Seed']);
+  for (let i = 1; i <= jumlah; i++) ws.addRow([i, '', '', '', '']);
   res.setHeader('Content-Disposition', 'attachment; filename="template-entries.xlsx"');
   res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-  res.send(buf);
+  await wb.xlsx.write(res);
+  res.end();
 });
 
 // ─── Excel export – current heat entries ────────────────────────────────────
 
-app.get('/api/heats/:heatId/export', (req, res) => {
+app.get('/api/heats/:heatId/export', async (req, res) => {
   const heat = db.getHeat(req.params.heatId);
   if (!heat) return fail(res, 'Heat tidak ditemukan', 404);
   const entries = db.listEntries(heat.id);
-  const ws = XLSX.utils.aoa_to_sheet([
-    ['Lane', 'Name', 'Club', 'Country', 'Seed', 'Result Time', 'Rank'],
-    ...entries.map(e => [e.lane, e.name, e.club, e.country, e.seed, e.result_time, e.result_rank]),
-  ]);
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, 'Heat');
-  const buf = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+  const wb = new ExcelJS.Workbook();
+  const ws = wb.addWorksheet('Heat');
+  ws.addRow(['Lane', 'Name', 'Club', 'Country', 'Seed', 'Result Time', 'Rank']);
+  entries.forEach(e => ws.addRow([e.lane, e.name, e.club, e.country, e.seed, e.result_time, e.result_rank]));
   res.setHeader('Content-Disposition', `attachment; filename="heat-${heat.id}.xlsx"`);
   res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-  res.send(buf);
+  await wb.xlsx.write(res);
+  res.end();
 });
 
 // ─── Start ────────────────────────────────────────────────────────────────────
