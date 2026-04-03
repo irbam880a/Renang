@@ -1,5 +1,7 @@
 """Main application window."""
 
+from __future__ import annotations
+
 import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
 import database.db_manager as db

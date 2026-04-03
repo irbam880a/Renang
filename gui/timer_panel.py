@@ -2,6 +2,8 @@
 Timer panel – displays per-lane timer cards and race start/reset controls.
 """
 
+from __future__ import annotations
+
 import tkinter as tk
 from tkinter import ttk
 import time

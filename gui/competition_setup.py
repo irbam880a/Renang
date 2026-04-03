@@ -1,5 +1,7 @@
 """Competition / Event / Heat setup dialogs."""
 
+from __future__ import annotations
+
 import tkinter as tk
 from tkinter import ttk, messagebox
 import database.db_manager as db

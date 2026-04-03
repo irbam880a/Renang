@@ -1,5 +1,7 @@
 """Results view – tabular display of saved results."""
 
+from __future__ import annotations
+
 import tkinter as tk
 from tkinter import ttk
 import database.db_manager as db

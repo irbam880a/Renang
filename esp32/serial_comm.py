@@ -12,6 +12,8 @@ Protocol (newline-terminated plain text):
                   PONG\\n           response to PING
 """
 
+from __future__ import annotations
+
 import threading
 import serial
 import serial.tools.list_ports
