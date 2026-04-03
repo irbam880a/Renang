@@ -1,9 +1,13 @@
-"""Results view – tabular display of saved results."""
+"""Results view – tabular display of saved results with print support."""
 
 from __future__ import annotations
 
+import os
+import sys
+import subprocess
+import tempfile
 import tkinter as tk
-from tkinter import ttk
+from tkinter import ttk, messagebox
 import database.db_manager as db
 from gui import theme
 
@@ -40,6 +44,8 @@ class ResultsView(ttk.Frame):
         self._acara_combo.bind("<<ComboboxSelected>>", lambda _: self._refresh())
         ttk.Button(top, text="↺ Muat Ulang", command=self._refresh).pack(
             side="left", padx=4)
+        ttk.Button(top, text="🖨  Cetak Hasil", command=self._print_results).pack(
+            side="right", padx=4)
 
         # Treeview
         frm = ttk.Frame(self)
@@ -105,3 +111,58 @@ class ResultsView(ttk.Frame):
                 r["rank"] if r["rank"] else "-",
                 r["notes"] or "",
             ))
+
+    # ── Print ────────────────────────────────────────────────────────────────
+
+    def _print_results(self):
+        """Generate a temporary PDF of the current results and open the system print dialog."""
+        if self._comp_id is None:
+            messagebox.showinfo("Info", "Tampilkan hasil lomba terlebih dahulu.",
+                                parent=self.winfo_toplevel())
+            return
+
+        try:
+            from export.pdf_export import export_competition_pdf
+        except ImportError:
+            messagebox.showerror(
+                "Error",
+                "reportlab belum terinstal.\nJalankan: pip install reportlab",
+                parent=self.winfo_toplevel(),
+            )
+            return
+
+        # Build a temporary PDF
+        tmp_dir = tempfile.mkdtemp(prefix="renang_print_")
+        pdf_path = os.path.join(tmp_dir, "hasil_lomba.pdf")
+        try:
+            export_competition_pdf(self._comp_id, pdf_path)
+        except Exception as exc:
+            messagebox.showerror("Error", f"Gagal membuat PDF:\n{exc}",
+                                 parent=self.winfo_toplevel())
+            return
+
+        # Open the PDF with the default viewer (which usually has a print button)
+        try:
+            if sys.platform == "win32":
+                os.startfile(pdf_path, "print")
+            elif sys.platform == "darwin":
+                subprocess.Popen(["open", pdf_path])
+            else:
+                subprocess.Popen(["xdg-open", pdf_path])
+            self._set_status("PDF dibuka untuk dicetak.")
+        except Exception:
+            # Fallback: just tell the user where the file is
+            messagebox.showinfo(
+                "Cetak",
+                f"PDF telah dibuat di:\n{pdf_path}\n\nSilakan buka dan cetak secara manual.",
+                parent=self.winfo_toplevel(),
+            )
+
+    def _set_status(self, msg: str):
+        """Propagate a status message to the main window status bar if available."""
+        try:
+            top = self.winfo_toplevel()
+            if hasattr(top, "_status_var"):
+                top._status_var.set(msg)
+        except Exception:
+            pass

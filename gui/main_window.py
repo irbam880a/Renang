@@ -10,6 +10,7 @@ from gui.timer_panel import TimerPanel
 from gui.settings_dialog import SettingsDialog
 from gui.competition_setup import CompetitionDialog, EventDialog, AthleteEntryDialog
 from gui.results_view import ResultsView
+from gui.user_guide import UserGuideTab
 from gui import theme
 
 
@@ -89,6 +90,7 @@ class MainWindow:
         self._build_tab_setup()
         self._build_tab_results()
         self._build_tab_export()
+        self._build_tab_guide()
 
         # Status bar
         status_bar = tk.Frame(self.root, bg=theme.BG_STATUS, height=28)
@@ -271,6 +273,12 @@ class MainWindow:
             row=3, column=0, columnspan=2, padx=12, pady=(0, 12), sticky="ew")
 
         self._refresh_exp_comps()
+
+    # ── Tab: User Guide ─────────────────────────────────────────────────────
+
+    def _build_tab_guide(self):
+        guide = UserGuideTab(self._nb)
+        self._nb.add(guide, text="  📖  Cara Penggunaan  ")
 
     # ── ESP32 ────────────────────────────────────────────────────────────────
 
