@@ -469,6 +469,8 @@ class MainWindow:
     # ── Results tab helpers ───────────────────────────────────────────────────
 
     def _refresh_res_comps(self):
+        if not hasattr(self, "_res_comp_cb"):
+            return
         comps = db.get_competitions()
         self._res_comps = comps
         self._res_comp_cb["values"] = [f"{c['title']} {c['year']}" for c in comps]
@@ -488,6 +490,8 @@ class MainWindow:
     # ── Export helpers ────────────────────────────────────────────────────────
 
     def _refresh_exp_comps(self):
+        if not hasattr(self, "_exp_comp_cb"):
+            return
         comps = db.get_competitions()
         self._exp_comps = comps
         self._exp_comp_cb["values"] = [f"{c['title']} {c['year']}" for c in comps]
